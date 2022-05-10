@@ -53,4 +53,20 @@ func TestEncode(t *testing.T) {
 			t.Fatalf("expected %v, but got %v", expected, readBuf)
 		}
 	})
+
+	t.Run("Should have correct end marker", func(t *testing.T) {
+		t.Parallel()
+		expected := []byte{0, 0, 0, 0, 0, 0, 0, 1}
+		width := uint32(100)
+		height := uint32(200)
+		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
+		var buf bytes.Buffer
+
+		qoi.Encode(&buf, image)
+
+		actual := buf.Bytes()[buf.Len()-8:]
+		if !reflect.DeepEqual(expected, actual) {
+			t.Fatalf("expected %v, but got %v", expected, actual)
+		}
+	})
 }
