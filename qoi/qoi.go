@@ -65,24 +65,24 @@ func (e *encoder) writeHeader() error {
 
 func (e encoder) writeRGBA() error {
 	var binWriter binaryWriterErr
-	binWriter.write(e.writer, binary.BigEndian, byte(0b11111111))
+	previousAlpha := byte(255)
 	r, g, b, a := e.image.At(0, 0).RGBA()
-	binWriter.write(e.writer, binary.BigEndian, byte(r))
-	binWriter.write(e.writer, binary.BigEndian, byte(g))
-	binWriter.write(e.writer, binary.BigEndian, byte(b))
-	binWriter.write(e.writer, binary.BigEndian, byte(a))
+	if previousAlpha == byte(a) {
+		binWriter.write(e.writer, binary.BigEndian, byte(0b11111110))
+		binWriter.write(e.writer, binary.BigEndian, byte(r))
+		binWriter.write(e.writer, binary.BigEndian, byte(g))
+		binWriter.write(e.writer, binary.BigEndian, byte(b))
+	} else {
+		binWriter.write(e.writer, binary.BigEndian, byte(0b11111111))
+		binWriter.write(e.writer, binary.BigEndian, byte(r))
+		binWriter.write(e.writer, binary.BigEndian, byte(g))
+		binWriter.write(e.writer, binary.BigEndian, byte(b))
+		binWriter.write(e.writer, binary.BigEndian, byte(a))
+	}
 	return binWriter.err
 }
 
 func (e encoder) writeEndMarker() error {
-	var binWriter binaryWriterErr
-	binWriter.write(e.writer, binary.BigEndian, byte(0))
-	binWriter.write(e.writer, binary.BigEndian, byte(0))
-	binWriter.write(e.writer, binary.BigEndian, byte(0))
-	binWriter.write(e.writer, binary.BigEndian, byte(0))
-	binWriter.write(e.writer, binary.BigEndian, byte(0))
-	binWriter.write(e.writer, binary.BigEndian, byte(0))
-	binWriter.write(e.writer, binary.BigEndian, byte(0))
-	binWriter.write(e.writer, binary.BigEndian, byte(1))
-	return binWriter.err
+	_, err := e.writer.Write([]byte{0, 0, 0, 0, 0, 0, 0, 1})
+	return err
 }
