@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"image"
+	"image/color"
 	"io"
 	"reflect"
 	"testing"
@@ -65,6 +66,26 @@ func TestEncode(t *testing.T) {
 		qoi.Encode(&buf, image)
 
 		actual := buf.Bytes()[buf.Len()-8:]
+		if !reflect.DeepEqual(expected, actual) {
+			t.Fatalf("expected %v, but got %v", expected, actual)
+		}
+	})
+
+	t.Run("Should have RGBA chunk", func(t *testing.T) {
+		t.Parallel()
+		expected := []byte{0b11111111, 0, 0, 0, 128}
+		width := uint32(100)
+		height := uint32(200)
+		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
+		image.SetRGBA(0, 0, color.RGBA{0, 0, 0, 128})
+		var buf bytes.Buffer
+
+		err := qoi.Encode(&buf, image)
+
+		if err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
+		actual := buf.Bytes()[14:19]
 		if !reflect.DeepEqual(expected, actual) {
 			t.Fatalf("expected %v, but got %v", expected, actual)
 		}
