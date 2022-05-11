@@ -32,17 +32,28 @@ func TestEncode(t *testing.T) {
 		expectedBuf := bytes.NewBuffer([]byte{'q', 'o', 'i', 'f'})
 		width := uint32(100)
 		height := uint32(200)
-		binary.Write(expectedBuf, binary.BigEndian, width)
-		binary.Write(expectedBuf, binary.BigEndian, height)
-		binary.Write(expectedBuf, binary.BigEndian, qoi.ChannelRGBA)
-		binary.Write(expectedBuf, binary.BigEndian, qoi.ColorSpaceSRGB)
+		if err := binary.Write(expectedBuf, binary.BigEndian, width); err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
+		if err := binary.Write(expectedBuf, binary.BigEndian, height); err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
+		if err := binary.Write(expectedBuf, binary.BigEndian, qoi.ChannelRGBA); err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
+		if err := binary.Write(expectedBuf, binary.BigEndian, qoi.ColorSpaceSRGB); err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
 		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
 		var buf bytes.Buffer
 
-		qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image)
 
+		if err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
 		readBuf := make([]byte, expectedBuf.Len())
-		_, err := buf.Read(readBuf)
+		_, err = buf.Read(readBuf)
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
 		}
@@ -63,8 +74,11 @@ func TestEncode(t *testing.T) {
 		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
 		var buf bytes.Buffer
 
-		qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image)
 
+		if err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
 		actual := buf.Bytes()[buf.Len()-8:]
 		if !reflect.DeepEqual(expected, actual) {
 			t.Fatalf("expected %v, but got %v", expected, actual)
