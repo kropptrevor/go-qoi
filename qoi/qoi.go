@@ -106,33 +106,48 @@ func (e *encoder) writeChunk(x, y int) error {
 	index := calculateIndex(pixel)
 	cachePixel := e.cache[index]
 	if pixel == cachePixel {
-		binWriter.write(byte(index))
+		e.writeIndexChunk(&binWriter, index)
 	} else if e.prev.a == pixel.a {
 		dr, dg, db := diff(e.prev, pixel)
 		if isSmallDiff(dr) && isSmallDiff(dg) && isSmallDiff(db) {
-			chunk := byte(0b01000000)
-			chunk |= byte(dr+2) << 4
-			chunk |= byte(dg+2) << 2
-			chunk |= byte(db + 2)
-			binWriter.write(chunk)
-			e.cache[index] = pixel
+			e.writeDiffChunk(&binWriter, dr, dg, db)
 		} else {
-			binWriter.write(byte(0b11111110))
-			binWriter.write(pixel.r)
-			binWriter.write(pixel.g)
-			binWriter.write(pixel.b)
-			e.cache[index] = pixel
+			e.writeRGBChunk(&binWriter, pixel)
 		}
+		e.cache[index] = pixel
 	} else {
-		binWriter.write(byte(0b11111111))
-		binWriter.write(pixel.r)
-		binWriter.write(pixel.g)
-		binWriter.write(pixel.b)
-		binWriter.write(pixel.a)
+		e.writeRGBAChunk(&binWriter, pixel)
 		e.cache[index] = pixel
 	}
 	e.prev = pixel
 	return binWriter.err
+}
+
+func (e *encoder) writeRGBChunk(binWriter *binaryWriterErr, pixel rgba) {
+	binWriter.write(byte(0b11111110))
+	binWriter.write(pixel.r)
+	binWriter.write(pixel.g)
+	binWriter.write(pixel.b)
+}
+
+func (e *encoder) writeRGBAChunk(binWriter *binaryWriterErr, pixel rgba) {
+	binWriter.write(byte(0b11111111))
+	binWriter.write(pixel.r)
+	binWriter.write(pixel.g)
+	binWriter.write(pixel.b)
+	binWriter.write(pixel.a)
+}
+
+func (e *encoder) writeIndexChunk(binWriter *binaryWriterErr, index int) {
+	binWriter.write(byte(index))
+}
+
+func (e *encoder) writeDiffChunk(binWriter *binaryWriterErr, dr int, dg int, db int) {
+	chunk := byte(0b01000000)
+	chunk |= byte(dr+2) << 4
+	chunk |= byte(dg+2) << 2
+	chunk |= byte(db + 2)
+	binWriter.write(chunk)
 }
 
 func calculateIndex(color rgba) int {
