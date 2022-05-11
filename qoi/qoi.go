@@ -37,14 +37,15 @@ func Encode(w io.Writer, m image.Image) error {
 }
 
 type binaryWriterErr struct {
-	err error
+	writer io.Writer
+	err    error
 }
 
-func (b *binaryWriterErr) write(w io.Writer, order binary.ByteOrder, data any) {
+func (b *binaryWriterErr) write(data any) {
 	if b == nil {
 		return
 	}
-	err := binary.Write(w, order, data)
+	err := binary.Write(b.writer, binary.BigEndian, data)
 	if err != nil {
 		b.err = err
 	}
@@ -74,38 +75,38 @@ type encoder struct {
 }
 
 func (e *encoder) writeHeader() error {
-	var binWriter binaryWriterErr
-	binWriter.write(e.writer, binary.BigEndian, []byte("qoif"))
+	binWriter := binaryWriterErr{writer: e.writer}
+	binWriter.write([]byte("qoif"))
 	rect := e.image.Bounds()
 	width := uint32(rect.Dx())
-	binWriter.write(e.writer, binary.BigEndian, width)
+	binWriter.write(width)
 	height := uint32(rect.Dy())
-	binWriter.write(e.writer, binary.BigEndian, height)
-	binWriter.write(e.writer, binary.BigEndian, ChannelRGBA)
-	binWriter.write(e.writer, binary.BigEndian, ColorSpaceSRGB)
+	binWriter.write(height)
+	binWriter.write(ChannelRGBA)
+	binWriter.write(ColorSpaceSRGB)
 	return binWriter.err
 }
 
 func (e *encoder) writeChunk(x, y int) error {
-	var binWriter binaryWriterErr
+	binWriter := binaryWriterErr{writer: e.writer}
 	previousAlpha := byte(255)
 	pixel := newRGBA(e.image.At(x, y))
 	index := calculateIndex(pixel)
 	cachePixel := e.cache[index]
 	if pixel == cachePixel {
-		binWriter.write(e.writer, binary.BigEndian, byte(index))
+		binWriter.write(byte(index))
 	} else if previousAlpha == pixel.a {
-		binWriter.write(e.writer, binary.BigEndian, byte(0b11111110))
-		binWriter.write(e.writer, binary.BigEndian, pixel.r)
-		binWriter.write(e.writer, binary.BigEndian, pixel.g)
-		binWriter.write(e.writer, binary.BigEndian, pixel.b)
+		binWriter.write(byte(0b11111110))
+		binWriter.write(pixel.r)
+		binWriter.write(pixel.g)
+		binWriter.write(pixel.b)
 		e.cache[index] = pixel
 	} else {
-		binWriter.write(e.writer, binary.BigEndian, byte(0b11111111))
-		binWriter.write(e.writer, binary.BigEndian, pixel.r)
-		binWriter.write(e.writer, binary.BigEndian, pixel.g)
-		binWriter.write(e.writer, binary.BigEndian, pixel.b)
-		binWriter.write(e.writer, binary.BigEndian, pixel.a)
+		binWriter.write(byte(0b11111111))
+		binWriter.write(pixel.r)
+		binWriter.write(pixel.g)
+		binWriter.write(pixel.b)
+		binWriter.write(pixel.a)
 		e.cache[index] = pixel
 	}
 	return binWriter.err
