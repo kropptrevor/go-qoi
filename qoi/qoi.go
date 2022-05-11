@@ -16,6 +16,7 @@ func Encode(w io.Writer, m image.Image) error {
 	e := encoder{
 		writer: w,
 		image:  m,
+		prev:   rgba{0, 0, 0, 255},
 	}
 	err := e.writeHeader()
 	if err != nil {
@@ -72,6 +73,7 @@ type encoder struct {
 	writer io.Writer
 	image  image.Image
 	cache  [64]rgba
+	prev   rgba
 }
 
 func (e *encoder) writeHeader() error {
@@ -87,20 +89,40 @@ func (e *encoder) writeHeader() error {
 	return binWriter.err
 }
 
+func diff(prev rgba, next rgba) (int, int, int) {
+	dr := int(next.r) - int(prev.r)
+	dg := int(next.g) - int(prev.g)
+	db := int(next.b) - int(prev.b)
+	return dr, dg, db
+}
+
+func isSmallDiff(diff int) bool {
+	return diff >= -2 && diff <= 1
+}
+
 func (e *encoder) writeChunk(x, y int) error {
 	binWriter := binaryWriterErr{writer: e.writer}
-	previousAlpha := byte(255)
 	pixel := newRGBA(e.image.At(x, y))
 	index := calculateIndex(pixel)
 	cachePixel := e.cache[index]
 	if pixel == cachePixel {
 		binWriter.write(byte(index))
-	} else if previousAlpha == pixel.a {
-		binWriter.write(byte(0b11111110))
-		binWriter.write(pixel.r)
-		binWriter.write(pixel.g)
-		binWriter.write(pixel.b)
-		e.cache[index] = pixel
+	} else if e.prev.a == pixel.a {
+		dr, dg, db := diff(e.prev, pixel)
+		if isSmallDiff(dr) && isSmallDiff(dg) && isSmallDiff(db) {
+			chunk := byte(0b01000000)
+			chunk |= byte(dr+2) << 4
+			chunk |= byte(dg+2) << 2
+			chunk |= byte(db + 2)
+			binWriter.write(chunk)
+			e.cache[index] = pixel
+		} else {
+			binWriter.write(byte(0b11111110))
+			binWriter.write(pixel.r)
+			binWriter.write(pixel.g)
+			binWriter.write(pixel.b)
+			e.cache[index] = pixel
+		}
 	} else {
 		binWriter.write(byte(0b11111111))
 		binWriter.write(pixel.r)
@@ -109,6 +131,7 @@ func (e *encoder) writeChunk(x, y int) error {
 		binWriter.write(pixel.a)
 		e.cache[index] = pixel
 	}
+	e.prev = pixel
 	return binWriter.err
 }
 
