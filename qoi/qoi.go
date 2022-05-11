@@ -89,15 +89,15 @@ func (e *encoder) writeHeader() error {
 	return binWriter.err
 }
 
-func diff(prev rgba, next rgba) (int, int, int) {
-	dr := int(next.r) - int(prev.r)
-	dg := int(next.g) - int(prev.g)
-	db := int(next.b) - int(prev.b)
+func diff(prev rgba, next rgba) (byte, byte, byte) {
+	dr := next.r - prev.r + 2
+	dg := next.g - prev.g + 2
+	db := next.b - prev.b + 2
 	return dr, dg, db
 }
 
-func isSmallDiff(diff int) bool {
-	return diff >= -2 && diff <= 1
+func isSmallDiff(diff byte) bool {
+	return diff <= 3
 }
 
 func (e *encoder) writeChunk(x, y int) error {
@@ -142,11 +142,11 @@ func (e *encoder) writeIndexChunk(binWriter *binaryWriterErr, index int) {
 	binWriter.write(byte(index))
 }
 
-func (e *encoder) writeDiffChunk(binWriter *binaryWriterErr, dr int, dg int, db int) {
+func (e *encoder) writeDiffChunk(binWriter *binaryWriterErr, dr byte, dg byte, db byte) {
 	chunk := byte(0b01000000)
-	chunk |= byte(dr+2) << 4
-	chunk |= byte(dg+2) << 2
-	chunk |= byte(db + 2)
+	chunk |= dr << 4
+	chunk |= dg << 2
+	chunk |= db
 	binWriter.write(chunk)
 }
 
