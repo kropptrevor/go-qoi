@@ -6,8 +6,11 @@ import (
 	"image"
 	"image/color"
 	"io"
+	"os"
 	"reflect"
 	"testing"
+
+	_ "image/png"
 
 	"github.com/kropptrevor/go-qoi/qoi"
 )
@@ -38,7 +41,7 @@ func TestEncode(t *testing.T) {
 		if err := binary.Write(expectedBuf, binary.BigEndian, height); err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
 		}
-		if err := binary.Write(expectedBuf, binary.BigEndian, qoi.ChannelRGBA); err != nil {
+		if err := binary.Write(expectedBuf, binary.BigEndian, qoi.ChannelRGB); err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
 		}
 		if err := binary.Write(expectedBuf, binary.BigEndian, qoi.ColorSpaceSRGB); err != nil {
@@ -325,6 +328,37 @@ func TestEncode(t *testing.T) {
 		}
 		actual := buf.Bytes()[buf.Len()-9]
 		if expected != actual {
+			t.Fatalf("expected %08b, but got %08b", expected, actual)
+		}
+	})
+
+	t.Run("Should encode 10x10 correctly", func(t *testing.T) {
+		t.Parallel()
+		pngFile, err := os.OpenFile("testdata/10x10.png", os.O_RDONLY, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		image, _, err := image.Decode(pngFile)
+		if err != nil {
+			t.Fatal(err)
+		}
+		qoiFile, err := os.OpenFile("testdata/10x10.qoi", os.O_RDONLY, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		expected, err := io.ReadAll(qoiFile)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var buf bytes.Buffer
+
+		err = qoi.Encode(&buf, image)
+
+		if err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
+		actual := buf.Bytes()
+		if !reflect.DeepEqual(expected, actual) {
 			t.Fatalf("expected %08b, but got %08b", expected, actual)
 		}
 	})

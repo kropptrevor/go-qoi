@@ -8,8 +8,10 @@ import (
 )
 
 const (
-	ChannelRGBA    uint8 = 4
-	ColorSpaceSRGB uint8 = 0
+	ChannelRGB       uint8 = 3
+	ChannelRGBA      uint8 = 4
+	ColorSpaceSRGB   uint8 = 0
+	ColorSpaceLinear uint8 = 1
 )
 
 func Encode(w io.Writer, m image.Image) error {
@@ -87,7 +89,7 @@ func (e *encoder) writeHeader() {
 	e.binWriter.write(width)
 	height := uint32(rect.Dy())
 	e.binWriter.write(height)
-	e.binWriter.write(ChannelRGBA)
+	e.binWriter.write(ChannelRGB)
 	e.binWriter.write(ColorSpaceSRGB)
 }
 
