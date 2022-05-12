@@ -96,8 +96,19 @@ func diff(prev rgba, next rgba) (byte, byte, byte) {
 	return dr, dg, db
 }
 
+func diffLuma(prev rgba, next rgba) (dg byte, drdg byte, dbdg byte) {
+	dg = next.g - prev.g + 32
+	drdg = (next.r - prev.r) - (next.g - prev.g) + 8
+	dbdg = (next.b - prev.b) - (next.g - prev.g) + 8
+	return
+}
+
 func isSmallDiff(diff byte) bool {
 	return diff <= 3
+}
+
+func isSmallLumaDiff(dg, drdg, dbdg byte) bool {
+	return dg <= 63 && drdg <= 15 && dbdg <= 15
 }
 
 func (e *encoder) writeChunk(x, y int) error {
@@ -109,8 +120,11 @@ func (e *encoder) writeChunk(x, y int) error {
 		e.writeIndexChunk(&binWriter, index)
 	} else if e.prev.a == pixel.a {
 		dr, dg, db := diff(e.prev, pixel)
+		dgLuma, drdg, dbdg := diffLuma(e.prev, pixel)
 		if isSmallDiff(dr) && isSmallDiff(dg) && isSmallDiff(db) {
 			e.writeDiffChunk(&binWriter, dr, dg, db)
+		} else if isSmallLumaDiff(dgLuma, drdg, dbdg) {
+			e.writeLumaChunk(&binWriter, dgLuma, drdg, dbdg)
 		} else {
 			e.writeRGBChunk(&binWriter, pixel)
 		}
@@ -148,6 +162,16 @@ func (e *encoder) writeDiffChunk(binWriter *binaryWriterErr, dr byte, dg byte, d
 	chunk |= dg << 2
 	chunk |= db
 	binWriter.write(chunk)
+}
+
+func (e *encoder) writeLumaChunk(binWriter *binaryWriterErr, dg byte, drdg byte, dbdg byte) {
+	first := byte(0b10000000)
+	first |= dg
+	binWriter.write(first)
+	second := byte(0)
+	second |= drdg << 4
+	second |= dbdg
+	binWriter.write(second)
 }
 
 func calculateIndex(color rgba) int {

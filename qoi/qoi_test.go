@@ -52,8 +52,8 @@ func TestEncode(t *testing.T) {
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
 		}
-		readBuf := make([]byte, expectedBuf.Len())
-		_, err = buf.Read(readBuf)
+		actual := make([]byte, expectedBuf.Len())
+		_, err = buf.Read(actual)
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
 		}
@@ -61,8 +61,8 @@ func TestEncode(t *testing.T) {
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
 		}
-		if !reflect.DeepEqual(expected, readBuf) {
-			t.Fatalf("expected %v, but got %v", expected, readBuf)
+		if !reflect.DeepEqual(expected, actual) {
+			t.Fatalf("expected %08b, but got %08b", expected, actual)
 		}
 	})
 
@@ -81,7 +81,7 @@ func TestEncode(t *testing.T) {
 		}
 		actual := buf.Bytes()[buf.Len()-8:]
 		if !reflect.DeepEqual(expected, actual) {
-			t.Fatalf("expected %v, but got %v", expected, actual)
+			t.Fatalf("expected %08b, but got %08b", expected, actual)
 		}
 	})
 
@@ -101,7 +101,7 @@ func TestEncode(t *testing.T) {
 		}
 		actual := buf.Bytes()[14:19]
 		if !reflect.DeepEqual(expected, actual) {
-			t.Fatalf("expected %v, but got %v", expected, actual)
+			t.Fatalf("expected %08b, but got %08b", expected, actual)
 		}
 	})
 
@@ -121,7 +121,7 @@ func TestEncode(t *testing.T) {
 		}
 		actual := buf.Bytes()[14:18]
 		if !reflect.DeepEqual(expected, actual) {
-			t.Fatalf("expected %v, but got %v", expected, actual)
+			t.Fatalf("expected %08b, but got %08b", expected, actual)
 		}
 	})
 
@@ -142,8 +142,8 @@ func TestEncode(t *testing.T) {
 			t.Fatalf("expected nil error, but got %v", err)
 		}
 		actual := buf.Bytes()[22]
-		if !reflect.DeepEqual(expected, actual) {
-			t.Fatalf("expected %v, but got %v", expected, actual)
+		if expected != actual {
+			t.Fatalf("expected %08b, but got %08b", expected, actual)
 		}
 	})
 
@@ -164,7 +164,7 @@ func TestEncode(t *testing.T) {
 		}
 		actual := buf.Bytes()[18]
 		if expected != actual {
-			t.Fatalf("expected %v, but got %v", expected, actual)
+			t.Fatalf("expected %08b, but got %08b", expected, actual)
 		}
 	})
 
@@ -185,7 +185,28 @@ func TestEncode(t *testing.T) {
 		}
 		actual := buf.Bytes()[18]
 		if expected != actual {
-			t.Fatalf("expected %v, but got %v", expected, actual)
+			t.Fatalf("expected %08b, but got %08b", expected, actual)
+		}
+	})
+
+	t.Run("Should have diff chunk", func(t *testing.T) {
+		t.Parallel()
+		expected := []byte{byte(0b_10_111111), byte(0b_0000_1111)}
+		width := uint32(100)
+		height := uint32(200)
+		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
+		image.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
+		image.SetRGBA(1, 0, color.RGBA{151, 31, 38, 255})
+		var buf bytes.Buffer
+
+		err := qoi.Encode(&buf, image)
+
+		if err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
+		actual := buf.Bytes()[18:20]
+		if !reflect.DeepEqual(expected, actual) {
+			t.Fatalf("expected %08b, but got %08b", expected, actual)
 		}
 	})
 }
