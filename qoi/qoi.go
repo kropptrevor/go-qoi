@@ -125,10 +125,11 @@ func (e *encoder) writeChunk(x, y int) {
 	pixel := newRGBA(e.image.At(x, y))
 	index := calculateIndex(pixel)
 	cachePixel := e.cache[index]
-	if e.isNewRun(pixel) || e.canLengthenRun(pixel) {
-		e.runLength++
+	switch {
+	case e.isNewRun(pixel) || e.canLengthenRun(pixel):
 		e.cache[index] = pixel
-	} else if e.runLength > 0 {
+		e.runLength++
+	case e.runLength > 0:
 		e.writeRunChunk()
 		if e.binWriter.err != nil {
 			return
@@ -136,22 +137,24 @@ func (e *encoder) writeChunk(x, y int) {
 		e.runLength = 0
 		e.writeChunk(x, y)
 		return
-	} else if pixel == cachePixel {
+	case pixel == cachePixel:
 		e.writeIndexChunk(index)
-	} else if e.prev.a == pixel.a {
+	case e.prev.a == pixel.a:
+		e.cache[index] = pixel
 		dr, dg, db := diff(e.prev, pixel)
-		dgLuma, drdg, dbdg := diffLuma(e.prev, pixel)
 		if isSmallDiff(dr) && isSmallDiff(dg) && isSmallDiff(db) {
 			e.writeDiffChunk(dr, dg, db)
-		} else if isSmallLumaDiff(dgLuma, drdg, dbdg) {
-			e.writeLumaChunk(dgLuma, drdg, dbdg)
-		} else {
-			e.writeRGBChunk(pixel)
+			break
 		}
+		dgLuma, drdg, dbdg := diffLuma(e.prev, pixel)
+		if isSmallLumaDiff(dgLuma, drdg, dbdg) {
+			e.writeLumaChunk(dgLuma, drdg, dbdg)
+			break
+		}
+		e.writeRGBChunk(pixel)
+	default:
 		e.cache[index] = pixel
-	} else {
 		e.writeRGBAChunk(pixel)
-		e.cache[index] = pixel
 	}
 	e.prev = pixel
 }
