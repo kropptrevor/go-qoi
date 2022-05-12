@@ -30,6 +30,9 @@ func Encode(w io.Writer, m image.Image) error {
 			}
 		}
 	}
+	if e.runLength > 0 {
+		e.writeRunChunk()
+	}
 	e.writeEndMarker()
 	if e.binWriter.err != nil {
 		return e.binWriter.err
@@ -126,7 +129,7 @@ func (e *encoder) writeChunk(x, y int) {
 		e.runLength++
 		e.cache[index] = pixel
 	} else if e.runLength > 0 {
-		e.writeRunChunk(e.runLength - 1)
+		e.writeRunChunk()
 		if e.binWriter.err != nil {
 			return
 		}
@@ -190,9 +193,9 @@ func (e *encoder) writeLumaChunk(dg byte, drdg byte, dbdg byte) {
 	e.binWriter.write(second)
 }
 
-func (e *encoder) writeRunChunk(runLength byte) {
+func (e *encoder) writeRunChunk() {
 	chunk := byte(0b11000000)
-	chunk |= runLength
+	chunk |= e.runLength - 1
 	e.binWriter.write(chunk)
 }
 
