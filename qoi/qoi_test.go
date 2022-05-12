@@ -230,4 +230,29 @@ func TestEncode(t *testing.T) {
 			t.Fatalf("expected %08b, but got %08b", expected, actual)
 		}
 	})
+
+	t.Run("Should have run chunk", func(t *testing.T) {
+		t.Parallel()
+		expected := byte(0b_11_000010)
+		width := uint32(100)
+		height := uint32(200)
+		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
+		image.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
+		image.SetRGBA(1, 0, color.RGBA{128, 0, 0, 255})
+		image.SetRGBA(2, 0, color.RGBA{128, 0, 0, 255})
+		image.SetRGBA(3, 0, color.RGBA{128, 0, 0, 255})
+		image.SetRGBA(4, 0, color.RGBA{128, 129, 0, 255})
+		var buf bytes.Buffer
+
+		err := qoi.Encode(&buf, image)
+
+		if err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
+		actual := buf.Bytes()[18]
+		if expected != actual {
+			t.Fatalf("expected %08b, but got %08b", expected, actual)
+		}
+	})
+
 }

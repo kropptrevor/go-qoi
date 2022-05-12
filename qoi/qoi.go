@@ -14,25 +14,25 @@ const (
 
 func Encode(w io.Writer, m image.Image) error {
 	e := encoder{
-		writer: w,
-		image:  m,
-		prev:   rgba{0, 0, 0, 255},
+		binWriter: binaryWriterErr{writer: w},
+		image:     m,
+		prev:      rgba{0, 0, 0, 255},
 	}
-	err := e.writeHeader()
-	if err != nil {
-		return err
+	e.writeHeader()
+	if e.binWriter.err != nil {
+		return e.binWriter.err
 	}
 	for y := 0; y < m.Bounds().Dy(); y++ {
 		for x := 0; x < m.Bounds().Dx(); x++ {
-			err = e.writeChunk(x, y)
-			if err != nil {
-				return err
+			e.writeChunk(x, y)
+			if e.binWriter.err != nil {
+				return e.binWriter.err
 			}
 		}
 	}
-	err = e.writeEndMarker()
-	if err != nil {
-		return err
+	e.writeEndMarker()
+	if e.binWriter.err != nil {
+		return e.binWriter.err
 	}
 	return nil
 }
@@ -70,23 +70,22 @@ func newRGBA(color color.Color) rgba {
 }
 
 type encoder struct {
-	writer io.Writer
-	image  image.Image
-	cache  [64]rgba
-	prev   rgba
+	binWriter binaryWriterErr
+	image     image.Image
+	cache     [64]rgba
+	prev      rgba
+	runLength byte
 }
 
-func (e *encoder) writeHeader() error {
-	binWriter := binaryWriterErr{writer: e.writer}
-	binWriter.write([]byte("qoif"))
+func (e *encoder) writeHeader() {
+	e.binWriter.write([]byte("qoif"))
 	rect := e.image.Bounds()
 	width := uint32(rect.Dx())
-	binWriter.write(width)
+	e.binWriter.write(width)
 	height := uint32(rect.Dy())
-	binWriter.write(height)
-	binWriter.write(ChannelRGBA)
-	binWriter.write(ColorSpaceSRGB)
-	return binWriter.err
+	e.binWriter.write(height)
+	e.binWriter.write(ChannelRGBA)
+	e.binWriter.write(ColorSpaceSRGB)
 }
 
 func diff(prev rgba, next rgba) (byte, byte, byte) {
@@ -111,74 +110,91 @@ func isSmallLumaDiff(dg, drdg, dbdg byte) bool {
 	return dg <= 63 && drdg <= 15 && dbdg <= 15
 }
 
-func (e *encoder) writeChunk(x, y int) error {
-	binWriter := binaryWriterErr{writer: e.writer}
+func (e *encoder) writeChunk(x, y int) {
 	pixel := newRGBA(e.image.At(x, y))
 	index := calculateIndex(pixel)
 	cachePixel := e.cache[index]
-	if pixel == cachePixel {
-		e.writeIndexChunk(&binWriter, index)
+	if e.runLength == 0 && e.prev == pixel {
+		e.runLength++
+	} else if e.runLength > 0 {
+		if e.prev == pixel {
+			e.runLength++
+		} else {
+			e.writeRunChunk(e.runLength - 1)
+			if e.binWriter.err != nil {
+				return
+			}
+			e.runLength = 0
+			e.writeChunk(x, y)
+			return
+		}
+	} else if pixel == cachePixel {
+		e.writeIndexChunk(index)
 	} else if e.prev.a == pixel.a {
 		dr, dg, db := diff(e.prev, pixel)
 		dgLuma, drdg, dbdg := diffLuma(e.prev, pixel)
 		if isSmallDiff(dr) && isSmallDiff(dg) && isSmallDiff(db) {
-			e.writeDiffChunk(&binWriter, dr, dg, db)
+			e.writeDiffChunk(dr, dg, db)
 		} else if isSmallLumaDiff(dgLuma, drdg, dbdg) {
-			e.writeLumaChunk(&binWriter, dgLuma, drdg, dbdg)
+			e.writeLumaChunk(dgLuma, drdg, dbdg)
 		} else {
-			e.writeRGBChunk(&binWriter, pixel)
+			e.writeRGBChunk(pixel)
 		}
 		e.cache[index] = pixel
 	} else {
-		e.writeRGBAChunk(&binWriter, pixel)
+		e.writeRGBAChunk(pixel)
 		e.cache[index] = pixel
 	}
 	e.prev = pixel
-	return binWriter.err
 }
 
-func (e *encoder) writeRGBChunk(binWriter *binaryWriterErr, pixel rgba) {
-	binWriter.write(byte(0b11111110))
-	binWriter.write(pixel.r)
-	binWriter.write(pixel.g)
-	binWriter.write(pixel.b)
+func (e *encoder) writeRGBChunk(pixel rgba) {
+	e.binWriter.write(byte(0b11111110))
+	e.binWriter.write(pixel.r)
+	e.binWriter.write(pixel.g)
+	e.binWriter.write(pixel.b)
 }
 
-func (e *encoder) writeRGBAChunk(binWriter *binaryWriterErr, pixel rgba) {
-	binWriter.write(byte(0b11111111))
-	binWriter.write(pixel.r)
-	binWriter.write(pixel.g)
-	binWriter.write(pixel.b)
-	binWriter.write(pixel.a)
+func (e *encoder) writeRGBAChunk(pixel rgba) {
+	e.binWriter.write(byte(0b11111111))
+	e.binWriter.write(pixel.r)
+	e.binWriter.write(pixel.g)
+	e.binWriter.write(pixel.b)
+	e.binWriter.write(pixel.a)
 }
 
-func (e *encoder) writeIndexChunk(binWriter *binaryWriterErr, index int) {
-	binWriter.write(byte(index))
+func (e *encoder) writeIndexChunk(index int) {
+	e.binWriter.write(byte(index))
 }
 
-func (e *encoder) writeDiffChunk(binWriter *binaryWriterErr, dr byte, dg byte, db byte) {
+func (e *encoder) writeDiffChunk(dr byte, dg byte, db byte) {
 	chunk := byte(0b01000000)
 	chunk |= dr << 4
 	chunk |= dg << 2
 	chunk |= db
-	binWriter.write(chunk)
+	e.binWriter.write(chunk)
 }
 
-func (e *encoder) writeLumaChunk(binWriter *binaryWriterErr, dg byte, drdg byte, dbdg byte) {
+func (e *encoder) writeLumaChunk(dg byte, drdg byte, dbdg byte) {
 	first := byte(0b10000000)
 	first |= dg
-	binWriter.write(first)
+	e.binWriter.write(first)
 	second := byte(0)
 	second |= drdg << 4
 	second |= dbdg
-	binWriter.write(second)
+	e.binWriter.write(second)
+}
+
+func (e *encoder) writeRunChunk(runLength byte) {
+	chunk := byte(0b11000000)
+	chunk |= runLength
+	e.binWriter.write(chunk)
 }
 
 func calculateIndex(color rgba) int {
 	return int((color.r*3 + color.g*5 + color.b*7 + color.a*11) % 64)
 }
 
-func (e *encoder) writeEndMarker() error {
-	_, err := e.writer.Write([]byte{0, 0, 0, 0, 0, 0, 0, 1})
-	return err
+func (e *encoder) writeEndMarker() {
+	e.binWriter.write([]byte{0, 0, 0, 0, 0, 0, 0, 1})
 }
