@@ -255,4 +255,30 @@ func TestEncode(t *testing.T) {
 		}
 	})
 
+	t.Run("Should have max length run chunk", func(t *testing.T) {
+		t.Parallel()
+		expected := []byte{
+			0b11111110, 128, 0, 0, // RGB
+			0b_11_111101, // run 62
+			0b_11_000000, // run 1
+		}
+		width := uint32(100)
+		height := uint32(200)
+		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
+		for i := 0; i < 64; i++ {
+			image.SetRGBA(i, 0, color.RGBA{128, 0, 0, 255})
+		}
+		var buf bytes.Buffer
+
+		err := qoi.Encode(&buf, image)
+
+		if err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
+		actual := buf.Bytes()[14:20]
+		if !reflect.DeepEqual(expected, actual) {
+			t.Fatalf("expected %08b, but got %08b", expected, actual)
+		}
+	})
+
 }

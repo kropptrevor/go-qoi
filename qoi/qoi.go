@@ -117,7 +117,7 @@ func (e *encoder) writeChunk(x, y int) {
 	if e.runLength == 0 && e.prev == pixel {
 		e.runLength++
 	} else if e.runLength > 0 {
-		if e.prev == pixel {
+		if e.prev == pixel && e.runLength <= 61 {
 			e.runLength++
 		} else {
 			e.writeRunChunk(e.runLength - 1)
