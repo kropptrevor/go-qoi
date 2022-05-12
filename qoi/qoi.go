@@ -88,6 +88,14 @@ func (e *encoder) writeHeader() {
 	e.binWriter.write(ColorSpaceSRGB)
 }
 
+func (e *encoder) isNewRun(next rgba) bool {
+	return e.runLength == 0 && e.prev == next
+}
+
+func (e *encoder) canLengthenRun(next rgba) bool {
+	return e.runLength > 0 && e.prev == next && e.runLength <= 61
+}
+
 func diff(prev rgba, next rgba) (byte, byte, byte) {
 	dr := next.r - prev.r + 2
 	dg := next.g - prev.g + 2
@@ -114,20 +122,16 @@ func (e *encoder) writeChunk(x, y int) {
 	pixel := newRGBA(e.image.At(x, y))
 	index := calculateIndex(pixel)
 	cachePixel := e.cache[index]
-	if e.runLength == 0 && e.prev == pixel {
+	if e.isNewRun(pixel) || e.canLengthenRun(pixel) {
 		e.runLength++
 	} else if e.runLength > 0 {
-		if e.prev == pixel && e.runLength <= 61 {
-			e.runLength++
-		} else {
-			e.writeRunChunk(e.runLength - 1)
-			if e.binWriter.err != nil {
-				return
-			}
-			e.runLength = 0
-			e.writeChunk(x, y)
+		e.writeRunChunk(e.runLength - 1)
+		if e.binWriter.err != nil {
 			return
 		}
+		e.runLength = 0
+		e.writeChunk(x, y)
+		return
 	} else if pixel == cachePixel {
 		e.writeIndexChunk(index)
 	} else if e.prev.a == pixel.a {
