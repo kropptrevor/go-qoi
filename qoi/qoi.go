@@ -124,6 +124,7 @@ func (e *encoder) writeChunk(x, y int) {
 	cachePixel := e.cache[index]
 	if e.isNewRun(pixel) || e.canLengthenRun(pixel) {
 		e.runLength++
+		e.cache[index] = pixel
 	} else if e.runLength > 0 {
 		e.writeRunChunk(e.runLength - 1)
 		if e.binWriter.err != nil {
