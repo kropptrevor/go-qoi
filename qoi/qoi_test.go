@@ -189,7 +189,7 @@ func TestEncode(t *testing.T) {
 		}
 	})
 
-	t.Run("Should have diff chunk", func(t *testing.T) {
+	t.Run("Should have luma chunk", func(t *testing.T) {
 		t.Parallel()
 		expected := []byte{byte(0b_10_111111), byte(0b_0000_1111)}
 		width := uint32(100)
