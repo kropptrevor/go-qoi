@@ -64,14 +64,31 @@ type rgba struct {
 	a byte
 }
 
-func newRGBA(color color.Color) rgba {
-	r, g, b, a := color.RGBA()
-	return rgba{
-		r: byte(r),
-		g: byte(g),
-		b: byte(b),
-		a: byte(a),
+func newRGBA(c color.Color) rgba {
+	c = color.NRGBAModel.Convert(c)
+	nrgba, ok := c.(color.NRGBA)
+	if !ok {
+		panic("couldn't convert to NRGBA")
 	}
+	return rgba{
+		r: byte(nrgba.R),
+		g: byte(nrgba.G),
+		b: byte(nrgba.B),
+		a: byte(nrgba.A),
+	}
+}
+
+func hasAlpha(m image.Image) bool {
+	rect := m.Bounds()
+	for x := 0; x < rect.Dx(); x++ {
+		for y := 0; y < rect.Dy(); y++ {
+			_, _, _, a := m.At(x, y).RGBA()
+			if byte(a) != byte(255) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 type encoder struct {
@@ -89,7 +106,11 @@ func (e *encoder) writeHeader() {
 	e.binWriter.write(width)
 	height := uint32(rect.Dy())
 	e.binWriter.write(height)
-	e.binWriter.write(ChannelRGB)
+	channel := ChannelRGB
+	if hasAlpha(e.image) {
+		channel = ChannelRGBA
+	}
+	e.binWriter.write(channel)
 	e.binWriter.write(ColorSpaceSRGB)
 }
 
