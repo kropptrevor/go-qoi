@@ -14,32 +14,43 @@ var ErrParseHeader = errors.New("failed to parse QOI header")
 var ErrParseEndMarker = errors.New("failed to parse QOI end marker")
 
 func Decode(input io.Reader) (image.Image, error) {
-	width, height, err := parseHeader(input)
+	d := decoder{
+		input: input,
+		cache: [64]rgba{},
+	}
+	width, height, err := d.parseHeader()
 	if err != nil {
 		return nil, err
 	}
 
-	output := image.NewRGBA(image.Rectangle{
+	d.img = image.NewRGBA(image.Rectangle{
 		Min: image.Point{0, 0},
 		Max: image.Point{int(width), int(height)},
 	})
 
-	size := width * height
-	if size > 0 {
-		parseChunk(input, output)
+	for y := 0; y < int(height); y++ {
+		for x := 0; x < int(width); x++ {
+			d.parseChunk(x, y)
+		}
 	}
 
-	err = parseEndMarker(input)
+	err = d.parseEndMarker()
 	if err != nil {
 		return nil, err
 	}
 
-	return output, nil
+	return d.img, nil
 }
 
-func parseHeader(input io.Reader) (width uint32, height uint32, err error) {
+type decoder struct {
+	input io.Reader
+	cache [64]rgba
+	img   *image.RGBA
+}
+
+func (d *decoder) parseHeader() (width uint32, height uint32, err error) {
 	magic := make([]byte, 4)
-	err = binary.Read(input, binary.BigEndian, magic)
+	err = binary.Read(d.input, binary.BigEndian, magic)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -49,18 +60,18 @@ func parseHeader(input io.Reader) (width uint32, height uint32, err error) {
 		return 0, 0, fmt.Errorf("bad magic bytes: %w", ErrParseHeader)
 	}
 
-	err = binary.Read(input, binary.BigEndian, &width)
+	err = binary.Read(d.input, binary.BigEndian, &width)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	err = binary.Read(input, binary.BigEndian, &height)
+	err = binary.Read(d.input, binary.BigEndian, &height)
 	if err != nil {
 		return 0, 0, err
 	}
 
 	var channels uint8
-	err = binary.Read(input, binary.BigEndian, &channels)
+	err = binary.Read(d.input, binary.BigEndian, &channels)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -69,7 +80,7 @@ func parseHeader(input io.Reader) (width uint32, height uint32, err error) {
 	}
 
 	var colorSpace uint8
-	err = binary.Read(input, binary.BigEndian, &colorSpace)
+	err = binary.Read(d.input, binary.BigEndian, &colorSpace)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -80,9 +91,9 @@ func parseHeader(input io.Reader) (width uint32, height uint32, err error) {
 	return
 }
 
-func parseEndMarker(input io.Reader) error {
+func (d *decoder) parseEndMarker() error {
 	var endMarker uint64
-	err := binary.Read(input, binary.BigEndian, &endMarker)
+	err := binary.Read(d.input, binary.BigEndian, &endMarker)
 	if err != nil {
 		if errors.Is(err, io.EOF) {
 			return fmt.Errorf("missing end marker: %w", ErrParseEndMarker)
@@ -99,25 +110,35 @@ func parseEndMarker(input io.Reader) error {
 	return nil
 }
 
-func parseChunk(input io.Reader, output *image.RGBA) error {
+func (d *decoder) parseChunk(x, y int) error {
 	var b byte
-	binary.Read(input, binary.BigEndian, &b)
+	binary.Read(d.input, binary.BigEndian, &b)
 	if b == TagRGB {
 		bs := [3]byte{}
-		err := binary.Read(input, binary.BigEndian, &bs)
+		err := binary.Read(d.input, binary.BigEndian, &bs)
 		if err != nil {
 			return err
 		}
 
-		output.SetRGBA(0, 0, color.RGBA{bs[0], bs[1], bs[2], 255})
+		pixel := rgba{bs[0], bs[1], bs[2], 255}
+		index := pixel.index()
+		d.cache[index] = pixel
+		d.img.SetRGBA(x, y, color.RGBA(pixel))
 	} else if b == TagRGBA {
 		bs := [4]byte{}
-		err := binary.Read(input, binary.BigEndian, &bs)
+		err := binary.Read(d.input, binary.BigEndian, &bs)
 		if err != nil {
 			return err
 		}
 
-		output.SetRGBA(0, 0, color.RGBA{bs[0], bs[1], bs[2], bs[3]})
+		pixel := rgba{bs[0], bs[1], bs[2], bs[3]}
+		index := pixel.index()
+		d.cache[index] = pixel
+		d.img.SetRGBA(x, y, color.RGBA(pixel))
+	} else if b&TagMask == TagIndex {
+		index := b & ^TagMask
+		pixel := d.cache[index]
+		d.img.SetRGBA(x, y, color.RGBA(pixel))
 	}
 	return nil
 }

@@ -56,13 +56,6 @@ func (b *binaryWriterErr) write(data any) {
 	}
 }
 
-type rgba struct {
-	r byte
-	g byte
-	b byte
-	a byte
-}
-
 func newRGBA(c color.Color) rgba {
 	c = color.NRGBAModel.Convert(c)
 	nrgba, ok := c.(color.NRGBA)
@@ -71,10 +64,10 @@ func newRGBA(c color.Color) rgba {
 	}
 
 	return rgba{
-		r: byte(nrgba.R),
-		g: byte(nrgba.G),
-		b: byte(nrgba.B),
-		a: byte(nrgba.A),
+		R: byte(nrgba.R),
+		G: byte(nrgba.G),
+		B: byte(nrgba.B),
+		A: byte(nrgba.A),
 	}
 }
 
@@ -127,16 +120,16 @@ func (e *encoder) canLengthenRun(next rgba) bool {
 }
 
 func diff(prev rgba, next rgba) (byte, byte, byte) {
-	dr := next.r - prev.r + 2
-	dg := next.g - prev.g + 2
-	db := next.b - prev.b + 2
+	dr := next.R - prev.R + 2
+	dg := next.G - prev.G + 2
+	db := next.B - prev.B + 2
 	return dr, dg, db
 }
 
 func diffLuma(prev rgba, next rgba) (dg byte, drdg byte, dbdg byte) {
-	dg = next.g - prev.g + 32
-	drdg = (next.r - prev.r) - (next.g - prev.g) + 8
-	dbdg = (next.b - prev.b) - (next.g - prev.g) + 8
+	dg = next.G - prev.G + 32
+	drdg = (next.R - prev.R) - (next.G - prev.G) + 8
+	dbdg = (next.B - prev.B) - (next.G - prev.G) + 8
 	return
 }
 
@@ -150,7 +143,7 @@ func isSmallLumaDiff(dg, drdg, dbdg byte) bool {
 
 func (e *encoder) writeChunk(x, y int) {
 	pixel := newRGBA(e.image.At(x, y))
-	index := calculateIndex(pixel)
+	index := pixel.index()
 	cachePixel := e.cache[index]
 
 	switch {
@@ -171,7 +164,7 @@ func (e *encoder) writeChunk(x, y int) {
 	case pixel == cachePixel:
 		e.writeIndexChunk(index)
 
-	case e.prev.a == pixel.a:
+	case e.prev.A == pixel.A:
 		e.cache[index] = pixel
 
 		dr, dg, db := diff(e.prev, pixel)
@@ -198,17 +191,17 @@ func (e *encoder) writeChunk(x, y int) {
 
 func (e *encoder) writeRGBChunk(pixel rgba) {
 	e.binWriter.write(TagRGB)
-	e.binWriter.write(pixel.r)
-	e.binWriter.write(pixel.g)
-	e.binWriter.write(pixel.b)
+	e.binWriter.write(pixel.R)
+	e.binWriter.write(pixel.G)
+	e.binWriter.write(pixel.B)
 }
 
 func (e *encoder) writeRGBAChunk(pixel rgba) {
 	e.binWriter.write(TagRGBA)
-	e.binWriter.write(pixel.r)
-	e.binWriter.write(pixel.g)
-	e.binWriter.write(pixel.b)
-	e.binWriter.write(pixel.a)
+	e.binWriter.write(pixel.R)
+	e.binWriter.write(pixel.G)
+	e.binWriter.write(pixel.B)
+	e.binWriter.write(pixel.A)
 }
 
 func (e *encoder) writeIndexChunk(index int) {
@@ -237,10 +230,6 @@ func (e *encoder) writeRunChunk() {
 	chunk := TagRun
 	chunk |= e.runLength - 1
 	e.binWriter.write(chunk)
-}
-
-func calculateIndex(color rgba) int {
-	return int((color.r*3 + color.g*5 + color.b*7 + color.a*11) % 64)
 }
 
 func (e *encoder) writeEndMarker() {
