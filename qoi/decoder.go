@@ -46,6 +46,7 @@ type decoder struct {
 	input io.Reader
 	cache [64]rgba
 	img   *image.RGBA
+	prev  rgba
 }
 
 func (d *decoder) parseHeader() (width uint32, height uint32, err error) {
@@ -113,32 +114,46 @@ func (d *decoder) parseEndMarker() error {
 func (d *decoder) parseChunk(x, y int) error {
 	var b byte
 	binary.Read(d.input, binary.BigEndian, &b)
-	if b == TagRGB {
+	var pixel rgba
+	switch {
+	case b == TagRGB:
 		bs := [3]byte{}
 		err := binary.Read(d.input, binary.BigEndian, &bs)
 		if err != nil {
 			return err
 		}
 
-		pixel := rgba{bs[0], bs[1], bs[2], 255}
+		pixel = rgba{bs[0], bs[1], bs[2], 255}
 		index := pixel.index()
 		d.cache[index] = pixel
-		d.img.SetRGBA(x, y, color.RGBA(pixel))
-	} else if b == TagRGBA {
+
+	case b == TagRGBA:
 		bs := [4]byte{}
 		err := binary.Read(d.input, binary.BigEndian, &bs)
 		if err != nil {
 			return err
 		}
 
-		pixel := rgba{bs[0], bs[1], bs[2], bs[3]}
+		pixel = rgba{bs[0], bs[1], bs[2], bs[3]}
 		index := pixel.index()
 		d.cache[index] = pixel
-		d.img.SetRGBA(x, y, color.RGBA(pixel))
-	} else if b&TagMask == TagIndex {
+
+	case b&TagMask == TagIndex:
 		index := b & ^TagMask
-		pixel := d.cache[index]
-		d.img.SetRGBA(x, y, color.RGBA(pixel))
+		pixel = d.cache[index]
+
+	case b&TagMask == TagDiff:
+		const bias = 2
+		dr := (b&0b_11_00_00)>>4 - bias
+		dg := (b&0b_00_11_00)>>2 - bias
+		db := (b&0b_00_00_11)>>0 - bias
+
+		pixel = d.prev
+		pixel.R += dr
+		pixel.G += dg
+		pixel.B += db
 	}
+	d.img.SetRGBA(x, y, color.RGBA(pixel))
+	d.prev = pixel
 	return nil
 }
