@@ -39,7 +39,7 @@ func Decode(reader io.Reader) (image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
-	if channels != ChannelRGB && channels != ChannelRGBA {
+	if channels != ChannelsRGB && channels != ChannelsRGBA {
 		return nil, fmt.Errorf("bad channels %v: %w", channels, ErrParseHeader)
 	}
 

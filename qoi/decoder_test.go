@@ -92,7 +92,7 @@ func TestDecode(t *testing.T) {
 		const width = 2
 		const height = 2
 		reader := bytes.NewReader([]byte{
-			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelRGBA, 2,
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, 2,
 			0, 0, 0, 0, 0, 0, 0, 1,
 		})
 

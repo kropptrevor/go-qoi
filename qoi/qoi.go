@@ -1,8 +1,8 @@
 package qoi
 
 const (
-	ChannelRGB       uint8 = 3
-	ChannelRGBA      uint8 = 4
+	ChannelsRGB      uint8 = 3
+	ChannelsRGBA     uint8 = 4
 	ColorSpaceSRGB   uint8 = 0
 	ColorSpaceLinear uint8 = 1
 )

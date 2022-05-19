@@ -109,9 +109,9 @@ func (e *encoder) writeHeader() {
 	height := uint32(rect.Dy())
 	e.binWriter.write(height)
 
-	channel := ChannelRGB
+	channel := ChannelsRGB
 	if hasAlpha(e.image) {
-		channel = ChannelRGBA
+		channel = ChannelsRGBA
 	}
 	e.binWriter.write(channel)
 

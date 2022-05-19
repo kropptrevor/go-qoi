@@ -41,7 +41,7 @@ func TestEncode(t *testing.T) {
 		if err := binary.Write(expectedBuf, binary.BigEndian, height); err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
 		}
-		if err := binary.Write(expectedBuf, binary.BigEndian, qoi.ChannelRGBA); err != nil {
+		if err := binary.Write(expectedBuf, binary.BigEndian, qoi.ChannelsRGBA); err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
 		}
 		if err := binary.Write(expectedBuf, binary.BigEndian, qoi.ColorSpaceSRGB); err != nil {
