@@ -10,6 +10,8 @@ import (
 
 var ErrParseHeader = errors.New("failed to parse QOI header")
 
+var ErrParseEndMarker = errors.New("failed to parse QOI end marker")
+
 func Decode(reader io.Reader) (image.Image, error) {
 	magic := make([]byte, 4)
 	err := binary.Read(reader, binary.BigEndian, magic)
@@ -50,6 +52,21 @@ func Decode(reader io.Reader) (image.Image, error) {
 	}
 	if colorSpace != ColorSpaceSRGB && colorSpace != ColorSpaceLinear {
 		return nil, fmt.Errorf("bad color space %v: %w", colorSpace, ErrParseHeader)
+	}
+
+	var endMarker uint64
+	err = binary.Read(reader, binary.BigEndian, &endMarker)
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			return nil, fmt.Errorf("missing end marker: %w", ErrParseEndMarker)
+		}
+		if errors.Is(err, io.ErrUnexpectedEOF) {
+			return nil, fmt.Errorf("partial end marker: %w", ErrParseEndMarker)
+		}
+		return nil, err
+	}
+	if endMarker != 1 {
+		return nil, fmt.Errorf("bad end marker %v: %w", endMarker, ErrParseEndMarker)
 	}
 
 	return image.NewNRGBA(image.Rectangle{
