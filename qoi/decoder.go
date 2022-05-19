@@ -113,12 +113,15 @@ func (d *decoder) parseEndMarker() error {
 
 func (d *decoder) parseChunk(x, y int) error {
 	var b byte
-	binary.Read(d.input, binary.BigEndian, &b)
+	err := binary.Read(d.input, binary.BigEndian, &b)
+	if err != nil {
+		return err
+	}
 	var pixel rgba
 	switch {
 	case b == TagRGB:
 		bs := [3]byte{}
-		err := binary.Read(d.input, binary.BigEndian, &bs)
+		err = binary.Read(d.input, binary.BigEndian, &bs)
 		if err != nil {
 			return err
 		}
@@ -129,7 +132,7 @@ func (d *decoder) parseChunk(x, y int) error {
 
 	case b == TagRGBA:
 		bs := [4]byte{}
-		err := binary.Read(d.input, binary.BigEndian, &bs)
+		err = binary.Read(d.input, binary.BigEndian, &bs)
 		if err != nil {
 			return err
 		}
@@ -152,6 +155,24 @@ func (d *decoder) parseChunk(x, y int) error {
 		pixel.R += dr
 		pixel.G += dg
 		pixel.B += db
+
+	case b&TagMask == TagLuma:
+		var b2 byte
+		err = binary.Read(d.input, binary.BigEndian, &b2)
+		if err != nil {
+			return err
+		}
+
+		const gBias = 32
+		const rbBias = 8
+		dg := (b & ^TagMask)>>0 - gBias
+		drdg := (b2&0b_1111_0000)>>4 - rbBias
+		dbdg := (b2&0b_0000_1111)>>0 - rbBias
+
+		pixel = d.prev
+		pixel.R += (drdg + dg)
+		pixel.G += dg
+		pixel.B += (dbdg + dg)
 	}
 	d.img.SetRGBA(x, y, color.RGBA(pixel))
 	d.prev = pixel
