@@ -13,10 +13,12 @@ func Encode(w io.Writer, m image.Image) error {
 		image:     m,
 		prev:      rgba{0, 0, 0, 255},
 	}
+
 	e.writeHeader()
 	if e.binWriter.err != nil {
 		return e.binWriter.err
 	}
+
 	for y := 0; y < m.Bounds().Dy(); y++ {
 		for x := 0; x < m.Bounds().Dx(); x++ {
 			e.writeChunk(x, y)
@@ -25,13 +27,16 @@ func Encode(w io.Writer, m image.Image) error {
 			}
 		}
 	}
+
 	if e.runLength > 0 {
 		e.writeRunChunk()
 	}
+
 	e.writeEndMarker()
 	if e.binWriter.err != nil {
 		return e.binWriter.err
 	}
+
 	return nil
 }
 
@@ -44,6 +49,7 @@ func (b *binaryWriterErr) write(data any) {
 	if b == nil {
 		return
 	}
+
 	err := binary.Write(b.writer, binary.BigEndian, data)
 	if err != nil {
 		b.err = err
@@ -63,6 +69,7 @@ func newRGBA(c color.Color) rgba {
 	if !ok {
 		panic("couldn't convert to NRGBA")
 	}
+
 	return rgba{
 		r: byte(nrgba.R),
 		g: byte(nrgba.G),
@@ -94,16 +101,20 @@ type encoder struct {
 
 func (e *encoder) writeHeader() {
 	e.binWriter.write([]byte("qoif"))
+
 	rect := e.image.Bounds()
 	width := uint32(rect.Dx())
 	e.binWriter.write(width)
+
 	height := uint32(rect.Dy())
 	e.binWriter.write(height)
+
 	channel := ChannelRGB
 	if hasAlpha(e.image) {
 		channel = ChannelRGBA
 	}
 	e.binWriter.write(channel)
+
 	e.binWriter.write(ColorSpaceSRGB)
 }
 
@@ -141,37 +152,47 @@ func (e *encoder) writeChunk(x, y int) {
 	pixel := newRGBA(e.image.At(x, y))
 	index := calculateIndex(pixel)
 	cachePixel := e.cache[index]
+
 	switch {
 	case e.isNewRun(pixel) || e.canLengthenRun(pixel):
 		e.cache[index] = pixel
 		e.runLength++
+
 	case e.runLength > 0:
 		e.writeRunChunk()
 		if e.binWriter.err != nil {
 			return
 		}
+
 		e.runLength = 0
 		e.writeChunk(x, y)
 		return
+
 	case pixel == cachePixel:
 		e.writeIndexChunk(index)
+
 	case e.prev.a == pixel.a:
 		e.cache[index] = pixel
+
 		dr, dg, db := diff(e.prev, pixel)
 		if isSmallDiff(dr) && isSmallDiff(dg) && isSmallDiff(db) {
 			e.writeDiffChunk(dr, dg, db)
 			break
 		}
+
 		dgLuma, drdg, dbdg := diffLuma(e.prev, pixel)
 		if isSmallLumaDiff(dgLuma, drdg, dbdg) {
 			e.writeLumaChunk(dgLuma, drdg, dbdg)
 			break
 		}
+
 		e.writeRGBChunk(pixel)
+
 	default:
 		e.cache[index] = pixel
 		e.writeRGBAChunk(pixel)
 	}
+
 	e.prev = pixel
 }
 
