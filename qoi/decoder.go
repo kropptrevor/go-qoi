@@ -102,7 +102,7 @@ func parseEndMarker(input io.Reader) error {
 func parseChunk(input io.Reader, output *image.RGBA) error {
 	var b byte
 	binary.Read(input, binary.BigEndian, &b)
-	if b == 0b11111110 {
+	if b == TagRGB {
 		bs := [3]byte{}
 		err := binary.Read(input, binary.BigEndian, &bs)
 		if err != nil {
@@ -110,7 +110,7 @@ func parseChunk(input io.Reader, output *image.RGBA) error {
 		}
 
 		output.SetRGBA(0, 0, color.RGBA{bs[0], bs[1], bs[2], 255})
-	} else if b == 0b11111111 {
+	} else if b == TagRGBA {
 		bs := [4]byte{}
 		err := binary.Read(input, binary.BigEndian, &bs)
 		if err != nil {

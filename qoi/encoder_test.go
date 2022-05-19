@@ -90,7 +90,7 @@ func TestEncode(t *testing.T) {
 
 	t.Run("Should have RGBA chunk", func(t *testing.T) {
 		t.Parallel()
-		expected := []byte{0b11111111, 0, 0, 0, 128}
+		expected := []byte{qoi.TagRGBA, 0, 0, 0, 128}
 		width := uint32(100)
 		height := uint32(200)
 		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
@@ -110,7 +110,7 @@ func TestEncode(t *testing.T) {
 
 	t.Run("Should have RGB chunk", func(t *testing.T) {
 		t.Parallel()
-		expected := []byte{0b11111110, 128, 0, 0}
+		expected := []byte{qoi.TagRGB, 128, 0, 0}
 		width := uint32(100)
 		height := uint32(200)
 		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
@@ -152,7 +152,7 @@ func TestEncode(t *testing.T) {
 
 	t.Run("Should have diff chunk", func(t *testing.T) {
 		t.Parallel()
-		expected := byte(0b_01_11_10_10)
+		expected := qoi.TagDiff | 0b_11_10_10
 		width := uint32(100)
 		height := uint32(200)
 		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
@@ -173,7 +173,7 @@ func TestEncode(t *testing.T) {
 
 	t.Run("Should have diff chunk with wraparound", func(t *testing.T) {
 		t.Parallel()
-		expected := byte(0b_01_10_11_01)
+		expected := qoi.TagDiff | 0b_10_11_01
 		width := uint32(100)
 		height := uint32(200)
 		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
@@ -194,7 +194,7 @@ func TestEncode(t *testing.T) {
 
 	t.Run("Should have luma chunk", func(t *testing.T) {
 		t.Parallel()
-		expected := []byte{byte(0b_10_111111), byte(0b_0000_1111)}
+		expected := []byte{qoi.TagLuma | 0b_111111, 0b_0000_1111}
 		width := uint32(100)
 		height := uint32(200)
 		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
@@ -215,7 +215,7 @@ func TestEncode(t *testing.T) {
 
 	t.Run("Should have luma chunk with wraparound", func(t *testing.T) {
 		t.Parallel()
-		expected := []byte{byte(0b_10_100010), byte(0b_0110_0101)}
+		expected := []byte{qoi.TagLuma | 0b_100010, 0b_0110_0101}
 		width := uint32(100)
 		height := uint32(200)
 		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
@@ -236,7 +236,7 @@ func TestEncode(t *testing.T) {
 
 	t.Run("Should have run chunk", func(t *testing.T) {
 		t.Parallel()
-		expected := byte(0b_11_000010)
+		expected := qoi.TagRun | 0b_000010
 		width := uint32(100)
 		height := uint32(200)
 		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
@@ -261,9 +261,9 @@ func TestEncode(t *testing.T) {
 	t.Run("Should have max length run chunk", func(t *testing.T) {
 		t.Parallel()
 		expected := []byte{
-			0b11111110, 128, 0, 0, // RGB
-			0b_11_111101, // run 62
-			0b_11_000000, // run 1
+			qoi.TagRGB, 128, 0, 0, // RGB
+			qoi.TagRun | 0b_111101, // run 62
+			qoi.TagRun,             // run 1
 		}
 		width := uint32(100)
 		height := uint32(200)
@@ -287,9 +287,9 @@ func TestEncode(t *testing.T) {
 	t.Run("Should have index chunk after run", func(t *testing.T) {
 		t.Parallel()
 		expected := []byte{
-			0b_11_000001,          // run 2
-			0b11111110, 127, 0, 0, // RGB
-			0b_00_110101, // index 53
+			qoi.TagRun | 0b_000001, // run 2
+			qoi.TagRGB, 127, 0, 0,  // RGB
+			qoi.TagIndex | 0b_110101, // index 53
 		}
 		width := uint32(100)
 		height := uint32(200)
@@ -313,7 +313,7 @@ func TestEncode(t *testing.T) {
 
 	t.Run("Should have run chunk before end marker", func(t *testing.T) {
 		t.Parallel()
-		expected := byte(0b_11_000000)
+		expected := qoi.TagRun
 		width := uint32(100)
 		height := uint32(200)
 		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))

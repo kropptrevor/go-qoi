@@ -197,14 +197,14 @@ func (e *encoder) writeChunk(x, y int) {
 }
 
 func (e *encoder) writeRGBChunk(pixel rgba) {
-	e.binWriter.write(byte(0b11111110))
+	e.binWriter.write(TagRGB)
 	e.binWriter.write(pixel.r)
 	e.binWriter.write(pixel.g)
 	e.binWriter.write(pixel.b)
 }
 
 func (e *encoder) writeRGBAChunk(pixel rgba) {
-	e.binWriter.write(byte(0b11111111))
+	e.binWriter.write(TagRGBA)
 	e.binWriter.write(pixel.r)
 	e.binWriter.write(pixel.g)
 	e.binWriter.write(pixel.b)
@@ -216,7 +216,7 @@ func (e *encoder) writeIndexChunk(index int) {
 }
 
 func (e *encoder) writeDiffChunk(dr byte, dg byte, db byte) {
-	chunk := byte(0b01000000)
+	chunk := TagDiff
 	chunk |= dr << 4
 	chunk |= dg << 2
 	chunk |= db
@@ -224,7 +224,7 @@ func (e *encoder) writeDiffChunk(dr byte, dg byte, db byte) {
 }
 
 func (e *encoder) writeLumaChunk(dg byte, drdg byte, dbdg byte) {
-	first := byte(0b10000000)
+	first := TagLuma
 	first |= dg
 	e.binWriter.write(first)
 	second := byte(0)
@@ -234,7 +234,7 @@ func (e *encoder) writeLumaChunk(dg byte, drdg byte, dbdg byte) {
 }
 
 func (e *encoder) writeRunChunk() {
-	chunk := byte(0b11000000)
+	chunk := TagRun
 	chunk |= e.runLength - 1
 	e.binWriter.write(chunk)
 }

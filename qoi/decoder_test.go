@@ -68,10 +68,10 @@ func TestDecode(t *testing.T) {
 		expectedHeight := 1
 		reader := bytes.NewReader([]byte{
 			'q', 'o', 'i', 'f', 0, 0, 0, byte(expectedWidth), 0, 0, 0, byte(expectedHeight), 3, 0,
-			0b11111110, // tag
-			128,        // red
-			0,          // green
-			0,          // blue
+			qoi.TagRGB,
+			128, // red
+			0,   // green
+			0,   // blue
 			0, 0, 0, 0, 0, 0, 0, 1,
 		})
 
@@ -199,10 +199,10 @@ func TestDecode(t *testing.T) {
 		expected.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
 		reader := bytes.NewReader([]byte{
 			'q', 'o', 'i', 'f', 0, 0, 0, size, 0, 0, 0, size, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
-			0b11111110, // tag
-			128,        // red
-			0,          // green
-			0,          // blue
+			qoi.TagRGB,
+			128, // red
+			0,   // green
+			0,   // blue
 			0, 0, 0, 0, 0, 0, 0, 1,
 		})
 
@@ -224,11 +224,11 @@ func TestDecode(t *testing.T) {
 		expected.SetRGBA(0, 0, color.RGBA{128, 0, 0, 128})
 		reader := bytes.NewReader([]byte{
 			'q', 'o', 'i', 'f', 0, 0, 0, size, 0, 0, 0, size, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
-			0b11111111, // tag
-			128,        // red
-			0,          // green
-			0,          // blue
-			128,        // alpha
+			qoi.TagRGBA,
+			128, // red
+			0,   // green
+			0,   // blue
+			128, // alpha
 			0, 0, 0, 0, 0, 0, 0, 1,
 		})
 
