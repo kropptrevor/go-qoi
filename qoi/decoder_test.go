@@ -357,4 +357,33 @@ func TestDecode(t *testing.T) {
 
 		imageEquals(t, expected, actual)
 	})
+
+	t.Run("Should parse luma chunk with wraparound", func(t *testing.T) {
+		t.Parallel()
+		const width = 2
+		const height = 1
+		expected := image.NewRGBA(image.Rectangle{
+			Min: image.Point{X: 0, Y: 0},
+			Max: image.Point{X: width, Y: height},
+		})
+		expected.SetRGBA(0, 0, color.RGBA{128, 255, 0, 255})
+		expected.SetRGBA(1, 0, color.RGBA{128, 1, 255, 255})
+		reader := bytes.NewReader([]byte{
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			qoi.TagRGB,
+			128, // red
+			255, // green
+			0,   // blue
+			qoi.TagLuma | 0b_100010,
+			0b_0110_0101,
+			0, 0, 0, 0, 0, 0, 0, 1,
+		})
+
+		actual, err := qoi.Decode(reader)
+		if err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
+
+		imageEquals(t, expected, actual)
+	})
 }
