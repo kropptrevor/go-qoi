@@ -3,10 +3,29 @@ package qoi_test
 import (
 	"bytes"
 	"errors"
+	"image"
+	"image/color"
 	"testing"
 
 	"github.com/kropptrevor/go-qoi/qoi"
 )
+
+func imageEquals(t *testing.T, expected image.Image, actual image.Image) {
+	esize := expected.Bounds().Size()
+	asize := actual.Bounds().Size()
+	if esize != asize {
+		t.Fatalf("expected image size %v but got %v", esize, asize)
+	}
+	for x := 0; x < esize.X; x++ {
+		for y := 0; y < esize.Y; y++ {
+			ecol := expected.At(x, y)
+			acol := actual.At(x, y)
+			if ecol != acol {
+				t.Fatalf("expected color %v but got %v at %v", ecol, acol, image.Point{x, y})
+			}
+		}
+	}
+}
 
 func TestDecode(t *testing.T) {
 	t.Parallel()
@@ -45,10 +64,14 @@ func TestDecode(t *testing.T) {
 
 	t.Run("Should correctly parse header width and height", func(t *testing.T) {
 		t.Parallel()
-		expectedWidth := 3
-		expectedHeight := 5
+		expectedWidth := 1
+		expectedHeight := 1
 		reader := bytes.NewReader([]byte{
 			'q', 'o', 'i', 'f', 0, 0, 0, byte(expectedWidth), 0, 0, 0, byte(expectedHeight), 3, 0,
+			0b11111110, // tag
+			128,        // red
+			0,          // green
+			0,          // blue
 			0, 0, 0, 0, 0, 0, 0, 1,
 		})
 
@@ -164,5 +187,30 @@ func TestDecode(t *testing.T) {
 		if !errors.Is(err, expected) {
 			t.Fatalf("expected %q but got %q", expected, err)
 		}
+	})
+
+	t.Run("Should parse RGB chunk", func(t *testing.T) {
+		t.Parallel()
+		const size = 1
+		expected := image.NewRGBA(image.Rectangle{
+			Min: image.Point{X: 0, Y: 0},
+			Max: image.Point{X: size, Y: size},
+		})
+		expected.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
+		reader := bytes.NewReader([]byte{
+			'q', 'o', 'i', 'f', 0, 0, 0, size, 0, 0, 0, size, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			0b11111110, // tag
+			128,        // red
+			0,          // green
+			0,          // blue
+			0, 0, 0, 0, 0, 0, 0, 1,
+		})
+
+		actual, err := qoi.Decode(reader)
+		if err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
+
+		imageEquals(t, expected, actual)
 	})
 }
