@@ -28,10 +28,9 @@ func Decode(input io.Reader) (image.Image, error) {
 		Max: image.Point{int(width), int(height)},
 	})
 
-	for y := 0; y < int(height); y++ {
-		for x := 0; x < int(width); x++ {
-			d.parseChunk(x, y)
-		}
+	err = d.parseChunks()
+	if err != nil {
+		return nil, err
 	}
 
 	err = d.parseEndMarker()
@@ -47,6 +46,8 @@ type decoder struct {
 	cache [64]rgba
 	img   *image.RGBA
 	prev  rgba
+	x     int
+	y     int
 }
 
 func (d *decoder) parseHeader() (width uint32, height uint32, err error) {
@@ -111,7 +112,21 @@ func (d *decoder) parseEndMarker() error {
 	return nil
 }
 
-func (d *decoder) parseChunk(x, y int) error {
+func (d *decoder) parseChunks() error {
+	width := d.img.Bounds().Dx()
+	height := d.img.Bounds().Dy()
+	d.x = 0
+	d.y = 0
+	for d.x < width && d.y < height {
+		err := d.parseChunk()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (d *decoder) parseChunk() error {
 	var b byte
 	err := binary.Read(d.input, binary.BigEndian, &b)
 	if err != nil {
@@ -129,6 +144,8 @@ func (d *decoder) parseChunk(x, y int) error {
 		pixel = rgba{bs[0], bs[1], bs[2], 255}
 		index := pixel.index()
 		d.cache[index] = pixel
+		d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
+		d.nextPixel()
 
 	case b == TagRGBA:
 		bs := [4]byte{}
@@ -140,10 +157,14 @@ func (d *decoder) parseChunk(x, y int) error {
 		pixel = rgba{bs[0], bs[1], bs[2], bs[3]}
 		index := pixel.index()
 		d.cache[index] = pixel
+		d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
+		d.nextPixel()
 
 	case b&TagMask == TagIndex:
 		index := b & ^TagMask
 		pixel = d.cache[index]
+		d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
+		d.nextPixel()
 
 	case b&TagMask == TagDiff:
 		const bias = 2
@@ -155,6 +176,8 @@ func (d *decoder) parseChunk(x, y int) error {
 		pixel.R += dr
 		pixel.G += dg
 		pixel.B += db
+		d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
+		d.nextPixel()
 
 	case b&TagMask == TagLuma:
 		var b2 byte
@@ -173,8 +196,27 @@ func (d *decoder) parseChunk(x, y int) error {
 		pixel.R += (drdg + dg)
 		pixel.G += dg
 		pixel.B += (dbdg + dg)
+		d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
+		d.nextPixel()
+
+	case b&TagMask == TagRun:
+		const bias = 1
+		length := b&0b_11_11_11 + bias
+		for i := 0; i < int(length); i++ {
+			d.img.SetRGBA(d.x, d.y, color.RGBA(d.prev))
+			d.nextPixel()
+		}
 	}
-	d.img.SetRGBA(x, y, color.RGBA(pixel))
 	d.prev = pixel
 	return nil
+}
+
+func (d *decoder) nextPixel() {
+	width := d.img.Bounds().Dx()
+	if d.x == width-1 {
+		d.x = 0
+		d.y++
+	} else {
+		d.x++
+	}
 }

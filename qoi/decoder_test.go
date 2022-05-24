@@ -386,4 +386,40 @@ func TestDecode(t *testing.T) {
 
 		imageEquals(t, expected, actual)
 	})
+
+	t.Run("Should parse run chunk", func(t *testing.T) {
+		t.Parallel()
+		const width = 5
+		const height = 1
+		expected := image.NewRGBA(image.Rectangle{
+			Min: image.Point{X: 0, Y: 0},
+			Max: image.Point{X: width, Y: height},
+		})
+		expected.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
+		expected.SetRGBA(1, 0, color.RGBA{128, 0, 0, 255})
+		expected.SetRGBA(2, 0, color.RGBA{128, 0, 0, 255})
+		expected.SetRGBA(3, 0, color.RGBA{128, 0, 0, 255})
+		expected.SetRGBA(4, 0, color.RGBA{128, 129, 0, 255})
+		reader := bytes.NewReader([]byte{
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			qoi.TagRGB,
+			128, // red
+			0,   // green
+			0,   // blue
+			qoi.TagRun | 0b_000010,
+			qoi.TagRGB,
+			128, // red
+			129, // green
+			0,   // blue
+			0, 0, 0, 0, 0, 0, 0, 1,
+		})
+
+		actual, err := qoi.Decode(reader)
+		if err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
+
+		imageEquals(t, expected, actual)
+	})
+
 }
