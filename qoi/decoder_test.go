@@ -428,6 +428,34 @@ func TestDecode(t *testing.T) {
 		imageEquals(t, expected, actual)
 	})
 
+	t.Run("Should decode index chunk after run", func(t *testing.T) {
+		t.Parallel()
+		const width = 2
+		const height = 2
+		expected := image.NewNRGBA(image.Rectangle{
+			Min: image.Point{X: 0, Y: 0},
+			Max: image.Point{X: width, Y: height},
+		})
+		expected.SetNRGBA(0, 0, color.NRGBA{0, 0, 0, 255})
+		expected.SetNRGBA(1, 0, color.NRGBA{0, 0, 0, 255})
+		expected.SetNRGBA(0, 1, color.NRGBA{127, 0, 0, 255})
+		expected.SetNRGBA(1, 1, color.NRGBA{0, 0, 0, 255})
+		reader := bytes.NewReader([]byte{
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			qoi.TagRun | 0b_000001, // run 2
+			qoi.TagRGB, 127, 0, 0,  // RGB
+			qoi.TagIndex | 0b_110101, // index 53
+			0, 0, 0, 0, 0, 0, 0, 1,
+		})
+
+		actual, err := qoi.Decode(reader)
+		if err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
+
+		imageEquals(t, expected, actual)
+	})
+
 	t.Run("Should decode 10x10 correctly", func(t *testing.T) {
 		t.Parallel()
 		pngFile, err := os.OpenFile("testdata/10x10.png", os.O_RDONLY, 0)

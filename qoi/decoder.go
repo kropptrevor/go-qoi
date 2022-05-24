@@ -132,6 +132,11 @@ func (d *decoder) parseChunks() error {
 	return nil
 }
 
+func (d *decoder) updateIndex(pixel rgba) {
+	index := pixel.index()
+	d.cache[index] = pixel
+}
+
 func (d *decoder) parseChunk() error {
 	var b byte
 	err := binary.Read(d.input, binary.BigEndian, &b)
@@ -149,9 +154,8 @@ func (d *decoder) parseChunk() error {
 
 		pixel = rgba{bs[0], bs[1], bs[2], 255}
 		d.img.SetNRGBA(d.x, d.y, color.NRGBA(pixel))
-		d.nextPixel()
-		index := pixel.index()
-		d.cache[index] = pixel
+		d.nextXY()
+		d.updateIndex(pixel)
 
 	case b == TagRGBA:
 		bs := [4]byte{}
@@ -162,15 +166,14 @@ func (d *decoder) parseChunk() error {
 
 		pixel = rgba{bs[0], bs[1], bs[2], bs[3]}
 		d.img.SetNRGBA(d.x, d.y, color.NRGBA(pixel))
-		d.nextPixel()
-		index := pixel.index()
-		d.cache[index] = pixel
+		d.nextXY()
+		d.updateIndex(pixel)
 
 	case b&TagMask == TagIndex:
 		index := b & ^TagMask
 		pixel = d.cache[index]
 		d.img.SetNRGBA(d.x, d.y, color.NRGBA(pixel))
-		d.nextPixel()
+		d.nextXY()
 
 	case b&TagMask == TagDiff:
 		const bias = 2
@@ -183,9 +186,8 @@ func (d *decoder) parseChunk() error {
 		pixel.G += dg
 		pixel.B += db
 		d.img.SetNRGBA(d.x, d.y, color.NRGBA(pixel))
-		d.nextPixel()
-		index := pixel.index()
-		d.cache[index] = pixel
+		d.nextXY()
+		d.updateIndex(pixel)
 
 	case b&TagMask == TagLuma:
 		var b2 byte
@@ -205,9 +207,8 @@ func (d *decoder) parseChunk() error {
 		pixel.G += dg
 		pixel.B += (dbdg + dg)
 		d.img.SetNRGBA(d.x, d.y, color.NRGBA(pixel))
-		d.nextPixel()
-		index := pixel.index()
-		d.cache[index] = pixel
+		d.nextXY()
+		d.updateIndex(pixel)
 
 	case b&TagMask == TagRun:
 		pixel = d.prev
@@ -215,14 +216,15 @@ func (d *decoder) parseChunk() error {
 		length := b&0b_11_11_11 + bias
 		for i := 0; i < int(length); i++ {
 			d.img.SetNRGBA(d.x, d.y, color.NRGBA(pixel))
-			d.nextPixel()
+			d.nextXY()
 		}
+		d.updateIndex(pixel)
 	}
 	d.prev = pixel
 	return nil
 }
 
-func (d *decoder) nextPixel() {
+func (d *decoder) nextXY() {
 	width := d.img.Bounds().Dx()
 	if d.x == width-1 {
 		d.x = 0
