@@ -5,6 +5,8 @@ import (
 	"errors"
 	"image"
 	"image/color"
+	"io"
+	"os"
 	"testing"
 
 	"github.com/kropptrevor/go-qoi/qoi"
@@ -419,6 +421,34 @@ func TestDecode(t *testing.T) {
 			t.Fatalf("expected nil error, but got %v", err)
 		}
 
+		imageEquals(t, expected, actual)
+	})
+
+	t.Run("Should decode 10x10 correctly", func(t *testing.T) {
+		t.Parallel()
+		pngFile, err := os.OpenFile("testdata/10x10.png", os.O_RDONLY, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		expected, _, err := image.Decode(pngFile)
+		if err != nil {
+			t.Fatal(err)
+		}
+		qoiFile, err := os.OpenFile("testdata/10x10.qoi", os.O_RDONLY, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		image, err := io.ReadAll(qoiFile)
+		if err != nil {
+			t.Fatal(err)
+		}
+		reader := bytes.NewReader(image)
+
+		actual, err := qoi.Decode(reader)
+
+		if err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
 		imageEquals(t, expected, actual)
 	})
 

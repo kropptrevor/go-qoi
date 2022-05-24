@@ -113,6 +113,12 @@ func (d *decoder) parseEndMarker() error {
 }
 
 func (d *decoder) parseChunks() error {
+	d.prev = rgba{
+		R: 0,
+		G: 0,
+		B: 0,
+		A: 255,
+	}
 	width := d.img.Bounds().Dx()
 	height := d.img.Bounds().Dy()
 	d.x = 0
@@ -142,10 +148,10 @@ func (d *decoder) parseChunk() error {
 		}
 
 		pixel = rgba{bs[0], bs[1], bs[2], 255}
-		index := pixel.index()
-		d.cache[index] = pixel
 		d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
 		d.nextPixel()
+		index := pixel.index()
+		d.cache[index] = pixel
 
 	case b == TagRGBA:
 		bs := [4]byte{}
@@ -155,10 +161,10 @@ func (d *decoder) parseChunk() error {
 		}
 
 		pixel = rgba{bs[0], bs[1], bs[2], bs[3]}
-		index := pixel.index()
-		d.cache[index] = pixel
 		d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
 		d.nextPixel()
+		index := pixel.index()
+		d.cache[index] = pixel
 
 	case b&TagMask == TagIndex:
 		index := b & ^TagMask
@@ -178,6 +184,8 @@ func (d *decoder) parseChunk() error {
 		pixel.B += db
 		d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
 		d.nextPixel()
+		index := pixel.index()
+		d.cache[index] = pixel
 
 	case b&TagMask == TagLuma:
 		var b2 byte
@@ -198,12 +206,15 @@ func (d *decoder) parseChunk() error {
 		pixel.B += (dbdg + dg)
 		d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
 		d.nextPixel()
+		index := pixel.index()
+		d.cache[index] = pixel
 
 	case b&TagMask == TagRun:
+		pixel = d.prev
 		const bias = 1
 		length := b&0b_11_11_11 + bias
 		for i := 0; i < int(length); i++ {
-			d.img.SetRGBA(d.x, d.y, color.RGBA(d.prev))
+			d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
 			d.nextPixel()
 		}
 	}
