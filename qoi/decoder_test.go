@@ -21,8 +21,12 @@ func imageEquals(t *testing.T, expected image.Image, actual image.Image) {
 	for x := 0; x < esize.X; x++ {
 		for y := 0; y < esize.Y; y++ {
 			ecol := expected.At(x, y)
+			ecol = color.NRGBAModel.Convert(ecol)
+			expected := ecol.(color.NRGBA)
 			acol := actual.At(x, y)
-			if ecol != acol {
+			acol = color.NRGBAModel.Convert(acol)
+			actual := acol.(color.NRGBA)
+			if expected != actual {
 				t.Fatalf("expected color %v but got %v at %v", ecol, acol, image.Point{x, y})
 			}
 		}
@@ -194,11 +198,11 @@ func TestDecode(t *testing.T) {
 	t.Run("Should parse RGB chunk", func(t *testing.T) {
 		t.Parallel()
 		const size = 1
-		expected := image.NewRGBA(image.Rectangle{
+		expected := image.NewNRGBA(image.Rectangle{
 			Min: image.Point{X: 0, Y: 0},
 			Max: image.Point{X: size, Y: size},
 		})
-		expected.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
+		expected.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 255})
 		reader := bytes.NewReader([]byte{
 			'q', 'o', 'i', 'f', 0, 0, 0, size, 0, 0, 0, size, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
 			qoi.TagRGB,
@@ -219,11 +223,11 @@ func TestDecode(t *testing.T) {
 	t.Run("Should parse RGBA chunk", func(t *testing.T) {
 		t.Parallel()
 		const size = 1
-		expected := image.NewRGBA(image.Rectangle{
+		expected := image.NewNRGBA(image.Rectangle{
 			Min: image.Point{X: 0, Y: 0},
 			Max: image.Point{X: size, Y: size},
 		})
-		expected.SetRGBA(0, 0, color.RGBA{128, 0, 0, 128})
+		expected.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 128})
 		reader := bytes.NewReader([]byte{
 			'q', 'o', 'i', 'f', 0, 0, 0, size, 0, 0, 0, size, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
 			qoi.TagRGBA,
@@ -246,13 +250,13 @@ func TestDecode(t *testing.T) {
 		t.Parallel()
 		const width = 3
 		const height = 1
-		expected := image.NewRGBA(image.Rectangle{
+		expected := image.NewNRGBA(image.Rectangle{
 			Min: image.Point{X: 0, Y: 0},
 			Max: image.Point{X: width, Y: height},
 		})
-		expected.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
-		expected.SetRGBA(1, 0, color.RGBA{0, 127, 0, 255})
-		expected.SetRGBA(2, 0, color.RGBA{128, 0, 0, 255})
+		expected.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 255})
+		expected.SetNRGBA(1, 0, color.NRGBA{0, 127, 0, 255})
+		expected.SetNRGBA(2, 0, color.NRGBA{128, 0, 0, 255})
 		reader := bytes.NewReader([]byte{
 			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
 			qoi.TagRGB,
@@ -279,12 +283,12 @@ func TestDecode(t *testing.T) {
 		t.Parallel()
 		const width = 2
 		const height = 1
-		expected := image.NewRGBA(image.Rectangle{
+		expected := image.NewNRGBA(image.Rectangle{
 			Min: image.Point{X: 0, Y: 0},
 			Max: image.Point{X: width, Y: height},
 		})
-		expected.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
-		expected.SetRGBA(1, 0, color.RGBA{129, 0, 0, 255})
+		expected.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 255})
+		expected.SetNRGBA(1, 0, color.NRGBA{129, 0, 0, 255})
 		reader := bytes.NewReader([]byte{
 			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
 			qoi.TagRGB,
@@ -307,12 +311,12 @@ func TestDecode(t *testing.T) {
 		t.Parallel()
 		const width = 2
 		const height = 1
-		expected := image.NewRGBA(image.Rectangle{
+		expected := image.NewNRGBA(image.Rectangle{
 			Min: image.Point{X: 0, Y: 0},
 			Max: image.Point{X: width, Y: height},
 		})
-		expected.SetRGBA(0, 0, color.RGBA{128, 255, 0, 255})
-		expected.SetRGBA(1, 0, color.RGBA{128, 0, 255, 255})
+		expected.SetNRGBA(0, 0, color.NRGBA{128, 255, 0, 255})
+		expected.SetNRGBA(1, 0, color.NRGBA{128, 0, 255, 255})
 		reader := bytes.NewReader([]byte{
 			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
 			qoi.TagRGB,
@@ -335,12 +339,12 @@ func TestDecode(t *testing.T) {
 		t.Parallel()
 		const width = 2
 		const height = 1
-		expected := image.NewRGBA(image.Rectangle{
+		expected := image.NewNRGBA(image.Rectangle{
 			Min: image.Point{X: 0, Y: 0},
 			Max: image.Point{X: width, Y: height},
 		})
-		expected.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
-		expected.SetRGBA(1, 0, color.RGBA{151, 31, 38, 255})
+		expected.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 255})
+		expected.SetNRGBA(1, 0, color.NRGBA{151, 31, 38, 255})
 		reader := bytes.NewReader([]byte{
 			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
 			qoi.TagRGB,
@@ -364,12 +368,12 @@ func TestDecode(t *testing.T) {
 		t.Parallel()
 		const width = 2
 		const height = 1
-		expected := image.NewRGBA(image.Rectangle{
+		expected := image.NewNRGBA(image.Rectangle{
 			Min: image.Point{X: 0, Y: 0},
 			Max: image.Point{X: width, Y: height},
 		})
-		expected.SetRGBA(0, 0, color.RGBA{128, 255, 0, 255})
-		expected.SetRGBA(1, 0, color.RGBA{128, 1, 255, 255})
+		expected.SetNRGBA(0, 0, color.NRGBA{128, 255, 0, 255})
+		expected.SetNRGBA(1, 0, color.NRGBA{128, 1, 255, 255})
 		reader := bytes.NewReader([]byte{
 			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
 			qoi.TagRGB,
@@ -393,15 +397,15 @@ func TestDecode(t *testing.T) {
 		t.Parallel()
 		const width = 5
 		const height = 1
-		expected := image.NewRGBA(image.Rectangle{
+		expected := image.NewNRGBA(image.Rectangle{
 			Min: image.Point{X: 0, Y: 0},
 			Max: image.Point{X: width, Y: height},
 		})
-		expected.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
-		expected.SetRGBA(1, 0, color.RGBA{128, 0, 0, 255})
-		expected.SetRGBA(2, 0, color.RGBA{128, 0, 0, 255})
-		expected.SetRGBA(3, 0, color.RGBA{128, 0, 0, 255})
-		expected.SetRGBA(4, 0, color.RGBA{128, 129, 0, 255})
+		expected.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 255})
+		expected.SetNRGBA(1, 0, color.NRGBA{128, 0, 0, 255})
+		expected.SetNRGBA(2, 0, color.NRGBA{128, 0, 0, 255})
+		expected.SetNRGBA(3, 0, color.NRGBA{128, 0, 0, 255})
+		expected.SetNRGBA(4, 0, color.NRGBA{128, 129, 0, 255})
 		reader := bytes.NewReader([]byte{
 			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
 			qoi.TagRGB,
@@ -435,6 +439,34 @@ func TestDecode(t *testing.T) {
 			t.Fatal(err)
 		}
 		qoiFile, err := os.OpenFile("testdata/10x10.qoi", os.O_RDONLY, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		image, err := io.ReadAll(qoiFile)
+		if err != nil {
+			t.Fatal(err)
+		}
+		reader := bytes.NewReader(image)
+
+		actual, err := qoi.Decode(reader)
+
+		if err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
+		imageEquals(t, expected, actual)
+	})
+
+	t.Run("Should decode sample correctly", func(t *testing.T) {
+		t.Parallel()
+		pngFile, err := os.OpenFile("testdata/sample.png", os.O_RDONLY, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		expected, _, err := image.Decode(pngFile)
+		if err != nil {
+			t.Fatal(err)
+		}
+		qoiFile, err := os.OpenFile("testdata/sample.qoi", os.O_RDONLY, 0)
 		if err != nil {
 			t.Fatal(err)
 		}

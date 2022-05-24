@@ -23,7 +23,7 @@ func Decode(input io.Reader) (image.Image, error) {
 		return nil, err
 	}
 
-	d.img = image.NewRGBA(image.Rectangle{
+	d.img = image.NewNRGBA(image.Rectangle{
 		Min: image.Point{0, 0},
 		Max: image.Point{int(width), int(height)},
 	})
@@ -44,7 +44,7 @@ func Decode(input io.Reader) (image.Image, error) {
 type decoder struct {
 	input io.Reader
 	cache [64]rgba
-	img   *image.RGBA
+	img   *image.NRGBA
 	prev  rgba
 	x     int
 	y     int
@@ -148,7 +148,7 @@ func (d *decoder) parseChunk() error {
 		}
 
 		pixel = rgba{bs[0], bs[1], bs[2], 255}
-		d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
+		d.img.SetNRGBA(d.x, d.y, color.NRGBA(pixel))
 		d.nextPixel()
 		index := pixel.index()
 		d.cache[index] = pixel
@@ -161,7 +161,7 @@ func (d *decoder) parseChunk() error {
 		}
 
 		pixel = rgba{bs[0], bs[1], bs[2], bs[3]}
-		d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
+		d.img.SetNRGBA(d.x, d.y, color.NRGBA(pixel))
 		d.nextPixel()
 		index := pixel.index()
 		d.cache[index] = pixel
@@ -169,7 +169,7 @@ func (d *decoder) parseChunk() error {
 	case b&TagMask == TagIndex:
 		index := b & ^TagMask
 		pixel = d.cache[index]
-		d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
+		d.img.SetNRGBA(d.x, d.y, color.NRGBA(pixel))
 		d.nextPixel()
 
 	case b&TagMask == TagDiff:
@@ -182,7 +182,7 @@ func (d *decoder) parseChunk() error {
 		pixel.R += dr
 		pixel.G += dg
 		pixel.B += db
-		d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
+		d.img.SetNRGBA(d.x, d.y, color.NRGBA(pixel))
 		d.nextPixel()
 		index := pixel.index()
 		d.cache[index] = pixel
@@ -204,7 +204,7 @@ func (d *decoder) parseChunk() error {
 		pixel.R += (drdg + dg)
 		pixel.G += dg
 		pixel.B += (dbdg + dg)
-		d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
+		d.img.SetNRGBA(d.x, d.y, color.NRGBA(pixel))
 		d.nextPixel()
 		index := pixel.index()
 		d.cache[index] = pixel
@@ -214,7 +214,7 @@ func (d *decoder) parseChunk() error {
 		const bias = 1
 		length := b&0b_11_11_11 + bias
 		for i := 0; i < int(length); i++ {
-			d.img.SetRGBA(d.x, d.y, color.RGBA(pixel))
+			d.img.SetNRGBA(d.x, d.y, color.NRGBA(pixel))
 			d.nextPixel()
 		}
 	}
