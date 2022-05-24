@@ -19,7 +19,7 @@ const (
 	TagRun   byte = 0b11_000000
 )
 
-type rgba color.RGBA
+type rgba color.NRGBA
 
 func (color rgba) index() int {
 	return int((color.R*3 + color.G*5 + color.B*7 + color.A*11) % 64)

@@ -20,7 +20,7 @@ func TestEncode(t *testing.T) {
 
 	t.Run("Should succeed", func(t *testing.T) {
 		t.Parallel()
-		image := image.NewRGBA(image.Rect(0, 0, 100, 200))
+		image := image.NewNRGBA(image.Rect(0, 0, 100, 200))
 		var buf bytes.Buffer
 
 		err := qoi.Encode(&buf, image)
@@ -47,7 +47,7 @@ func TestEncode(t *testing.T) {
 		if err := binary.Write(expectedBuf, binary.BigEndian, qoi.ColorSpaceSRGB); err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
 		}
-		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
+		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
 		var buf bytes.Buffer
 
 		err := qoi.Encode(&buf, image)
@@ -74,7 +74,7 @@ func TestEncode(t *testing.T) {
 		expected := []byte{0, 0, 0, 0, 0, 0, 0, 1}
 		width := uint32(100)
 		height := uint32(200)
-		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
+		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
 		var buf bytes.Buffer
 
 		err := qoi.Encode(&buf, image)
@@ -93,8 +93,8 @@ func TestEncode(t *testing.T) {
 		expected := []byte{qoi.TagRGBA, 0, 0, 0, 128}
 		width := uint32(100)
 		height := uint32(200)
-		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
-		image.SetRGBA(0, 0, color.RGBA{0, 0, 0, 128})
+		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
+		image.SetNRGBA(0, 0, color.NRGBA{0, 0, 0, 128})
 		var buf bytes.Buffer
 
 		err := qoi.Encode(&buf, image)
@@ -113,8 +113,8 @@ func TestEncode(t *testing.T) {
 		expected := []byte{qoi.TagRGB, 128, 0, 0}
 		width := uint32(100)
 		height := uint32(200)
-		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
-		image.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
+		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
+		image.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 255})
 		var buf bytes.Buffer
 
 		err := qoi.Encode(&buf, image)
@@ -133,10 +133,10 @@ func TestEncode(t *testing.T) {
 		expected := byte(53)
 		width := uint32(100)
 		height := uint32(200)
-		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
-		image.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
-		image.SetRGBA(1, 0, color.RGBA{0, 127, 0, 255})
-		image.SetRGBA(2, 0, color.RGBA{128, 0, 0, 255})
+		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
+		image.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 255})
+		image.SetNRGBA(1, 0, color.NRGBA{0, 127, 0, 255})
+		image.SetNRGBA(2, 0, color.NRGBA{128, 0, 0, 255})
 		var buf bytes.Buffer
 
 		err := qoi.Encode(&buf, image)
@@ -155,9 +155,9 @@ func TestEncode(t *testing.T) {
 		expected := qoi.TagDiff | 0b_11_10_10
 		width := uint32(100)
 		height := uint32(200)
-		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
-		image.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
-		image.SetRGBA(1, 0, color.RGBA{129, 0, 0, 255})
+		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
+		image.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 255})
+		image.SetNRGBA(1, 0, color.NRGBA{129, 0, 0, 255})
 		var buf bytes.Buffer
 
 		err := qoi.Encode(&buf, image)
@@ -176,9 +176,9 @@ func TestEncode(t *testing.T) {
 		expected := qoi.TagDiff | 0b_10_11_01
 		width := uint32(100)
 		height := uint32(200)
-		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
-		image.SetRGBA(0, 0, color.RGBA{128, 255, 0, 255})
-		image.SetRGBA(1, 0, color.RGBA{128, 0, 255, 255})
+		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
+		image.SetNRGBA(0, 0, color.NRGBA{128, 255, 0, 255})
+		image.SetNRGBA(1, 0, color.NRGBA{128, 0, 255, 255})
 		var buf bytes.Buffer
 
 		err := qoi.Encode(&buf, image)
@@ -197,9 +197,9 @@ func TestEncode(t *testing.T) {
 		expected := []byte{qoi.TagLuma | 0b_111111, 0b_0000_1111}
 		width := uint32(100)
 		height := uint32(200)
-		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
-		image.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
-		image.SetRGBA(1, 0, color.RGBA{151, 31, 38, 255})
+		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
+		image.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 255})
+		image.SetNRGBA(1, 0, color.NRGBA{151, 31, 38, 255})
 		var buf bytes.Buffer
 
 		err := qoi.Encode(&buf, image)
@@ -218,9 +218,9 @@ func TestEncode(t *testing.T) {
 		expected := []byte{qoi.TagLuma | 0b_100010, 0b_0110_0101}
 		width := uint32(100)
 		height := uint32(200)
-		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
-		image.SetRGBA(0, 0, color.RGBA{128, 255, 0, 255})
-		image.SetRGBA(1, 0, color.RGBA{128, 1, 255, 255})
+		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
+		image.SetNRGBA(0, 0, color.NRGBA{128, 255, 0, 255})
+		image.SetNRGBA(1, 0, color.NRGBA{128, 1, 255, 255})
 		var buf bytes.Buffer
 
 		err := qoi.Encode(&buf, image)
@@ -239,12 +239,12 @@ func TestEncode(t *testing.T) {
 		expected := qoi.TagRun | 0b_000010
 		width := uint32(100)
 		height := uint32(200)
-		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
-		image.SetRGBA(0, 0, color.RGBA{128, 0, 0, 255})
-		image.SetRGBA(1, 0, color.RGBA{128, 0, 0, 255})
-		image.SetRGBA(2, 0, color.RGBA{128, 0, 0, 255})
-		image.SetRGBA(3, 0, color.RGBA{128, 0, 0, 255})
-		image.SetRGBA(4, 0, color.RGBA{128, 129, 0, 255})
+		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
+		image.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 255})
+		image.SetNRGBA(1, 0, color.NRGBA{128, 0, 0, 255})
+		image.SetNRGBA(2, 0, color.NRGBA{128, 0, 0, 255})
+		image.SetNRGBA(3, 0, color.NRGBA{128, 0, 0, 255})
+		image.SetNRGBA(4, 0, color.NRGBA{128, 129, 0, 255})
 		var buf bytes.Buffer
 
 		err := qoi.Encode(&buf, image)
@@ -267,9 +267,9 @@ func TestEncode(t *testing.T) {
 		}
 		width := uint32(100)
 		height := uint32(200)
-		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
+		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
 		for i := 0; i < 64; i++ {
-			image.SetRGBA(i, 0, color.RGBA{128, 0, 0, 255})
+			image.SetNRGBA(i, 0, color.NRGBA{128, 0, 0, 255})
 		}
 		var buf bytes.Buffer
 
@@ -293,11 +293,11 @@ func TestEncode(t *testing.T) {
 		}
 		width := uint32(100)
 		height := uint32(200)
-		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
-		image.SetRGBA(0, 0, color.RGBA{0, 0, 0, 255})
-		image.SetRGBA(1, 0, color.RGBA{0, 0, 0, 255})
-		image.SetRGBA(2, 0, color.RGBA{127, 0, 0, 255})
-		image.SetRGBA(3, 0, color.RGBA{0, 0, 0, 255})
+		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
+		image.SetNRGBA(0, 0, color.NRGBA{0, 0, 0, 255})
+		image.SetNRGBA(1, 0, color.NRGBA{0, 0, 0, 255})
+		image.SetNRGBA(2, 0, color.NRGBA{127, 0, 0, 255})
+		image.SetNRGBA(3, 0, color.NRGBA{0, 0, 0, 255})
 		var buf bytes.Buffer
 
 		err := qoi.Encode(&buf, image)
@@ -316,9 +316,9 @@ func TestEncode(t *testing.T) {
 		expected := qoi.TagRun
 		width := uint32(100)
 		height := uint32(200)
-		image := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
-		image.SetRGBA(int(width)-2, int(height)-1, color.RGBA{128, 0, 0, 255})
-		image.SetRGBA(int(width)-1, int(height)-1, color.RGBA{128, 0, 0, 255})
+		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
+		image.SetNRGBA(int(width)-2, int(height)-1, color.NRGBA{128, 0, 0, 255})
+		image.SetNRGBA(int(width)-1, int(height)-1, color.NRGBA{128, 0, 0, 255})
 		var buf bytes.Buffer
 
 		err := qoi.Encode(&buf, image)
