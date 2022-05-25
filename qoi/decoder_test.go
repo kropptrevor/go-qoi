@@ -121,7 +121,7 @@ func TestDecode(t *testing.T) {
 		const width = 0
 		const height = 0
 		reader := bytes.NewReader([]byte{
-			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, 2,
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, byte(qoi.ChannelsRGBA), 2,
 			0, 0, 0, 0, 0, 0, 0, 1,
 		})
 
@@ -141,7 +141,7 @@ func TestDecode(t *testing.T) {
 		const width = 0
 		const height = 0
 		reader := bytes.NewReader([]byte{
-			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, byte(qoi.ChannelsRGBA), qoi.ColorSpaceSRGB,
 		})
 
 		_, err := qoi.Decode(reader)
@@ -160,7 +160,7 @@ func TestDecode(t *testing.T) {
 		const width = 0
 		const height = 0
 		reader := bytes.NewReader([]byte{
-			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, byte(qoi.ChannelsRGBA), qoi.ColorSpaceSRGB,
 			0, 0, 0, 0, 0,
 		})
 
@@ -180,7 +180,7 @@ func TestDecode(t *testing.T) {
 		const width = 0
 		const height = 0
 		reader := bytes.NewReader([]byte{
-			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, byte(qoi.ChannelsRGBA), qoi.ColorSpaceSRGB,
 			0, 0, 0, 0, 0, 1, 1, 1,
 		})
 
@@ -204,7 +204,7 @@ func TestDecode(t *testing.T) {
 		})
 		expected.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 255})
 		reader := bytes.NewReader([]byte{
-			'q', 'o', 'i', 'f', 0, 0, 0, size, 0, 0, 0, size, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			'q', 'o', 'i', 'f', 0, 0, 0, size, 0, 0, 0, size, byte(qoi.ChannelsRGBA), qoi.ColorSpaceSRGB,
 			qoi.TagRGB,
 			128, // red
 			0,   // green
@@ -229,7 +229,7 @@ func TestDecode(t *testing.T) {
 		})
 		expected.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 128})
 		reader := bytes.NewReader([]byte{
-			'q', 'o', 'i', 'f', 0, 0, 0, size, 0, 0, 0, size, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			'q', 'o', 'i', 'f', 0, 0, 0, size, 0, 0, 0, size, byte(qoi.ChannelsRGBA), qoi.ColorSpaceSRGB,
 			qoi.TagRGBA,
 			128, // red
 			0,   // green
@@ -258,7 +258,7 @@ func TestDecode(t *testing.T) {
 		expected.SetNRGBA(1, 0, color.NRGBA{0, 127, 0, 255})
 		expected.SetNRGBA(2, 0, color.NRGBA{128, 0, 0, 255})
 		reader := bytes.NewReader([]byte{
-			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, byte(qoi.ChannelsRGBA), qoi.ColorSpaceSRGB,
 			qoi.TagRGB,
 			128, // red
 			0,   // green
@@ -290,7 +290,7 @@ func TestDecode(t *testing.T) {
 		expected.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 255})
 		expected.SetNRGBA(1, 0, color.NRGBA{129, 0, 0, 255})
 		reader := bytes.NewReader([]byte{
-			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, byte(qoi.ChannelsRGBA), qoi.ColorSpaceSRGB,
 			qoi.TagRGB,
 			128, // red
 			0,   // green
@@ -318,7 +318,7 @@ func TestDecode(t *testing.T) {
 		expected.SetNRGBA(0, 0, color.NRGBA{128, 255, 0, 255})
 		expected.SetNRGBA(1, 0, color.NRGBA{128, 0, 255, 255})
 		reader := bytes.NewReader([]byte{
-			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, byte(qoi.ChannelsRGBA), qoi.ColorSpaceSRGB,
 			qoi.TagRGB,
 			128, // red
 			255, // green
@@ -346,7 +346,7 @@ func TestDecode(t *testing.T) {
 		expected.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 255})
 		expected.SetNRGBA(1, 0, color.NRGBA{151, 31, 38, 255})
 		reader := bytes.NewReader([]byte{
-			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, byte(qoi.ChannelsRGBA), qoi.ColorSpaceSRGB,
 			qoi.TagRGB,
 			128, // red
 			0,   // green
@@ -375,7 +375,7 @@ func TestDecode(t *testing.T) {
 		expected.SetNRGBA(0, 0, color.NRGBA{128, 255, 0, 255})
 		expected.SetNRGBA(1, 0, color.NRGBA{128, 1, 255, 255})
 		reader := bytes.NewReader([]byte{
-			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, byte(qoi.ChannelsRGBA), qoi.ColorSpaceSRGB,
 			qoi.TagRGB,
 			128, // red
 			255, // green
@@ -407,7 +407,7 @@ func TestDecode(t *testing.T) {
 		expected.SetNRGBA(3, 0, color.NRGBA{128, 0, 0, 255})
 		expected.SetNRGBA(4, 0, color.NRGBA{128, 129, 0, 255})
 		reader := bytes.NewReader([]byte{
-			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, byte(qoi.ChannelsRGBA), qoi.ColorSpaceSRGB,
 			qoi.TagRGB,
 			128, // red
 			0,   // green
@@ -441,7 +441,7 @@ func TestDecode(t *testing.T) {
 		expected.SetNRGBA(0, 1, color.NRGBA{127, 0, 0, 255})
 		expected.SetNRGBA(1, 1, color.NRGBA{0, 0, 0, 255})
 		reader := bytes.NewReader([]byte{
-			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, qoi.ChannelsRGBA, qoi.ColorSpaceSRGB,
+			'q', 'o', 'i', 'f', 0, 0, 0, width, 0, 0, 0, height, byte(qoi.ChannelsRGBA), qoi.ColorSpaceSRGB,
 			qoi.TagRun | 0b_000001, // run 2
 			qoi.TagRGB, 127, 0, 0,  // RGB
 			qoi.TagIndex | 0b_110101, // index 53

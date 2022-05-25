@@ -7,9 +7,10 @@ import (
 	"io"
 )
 
-func Encode(w io.Writer, m image.Image) error {
+func Encode(w io.Writer, m image.Image, ch Channels) error {
 	e := encoder{
 		binWriter: binaryWriterErr{writer: w},
+		channels:  ch,
 		image:     m,
 		prev:      rgba{0, 0, 0, 255},
 	}
@@ -71,21 +72,9 @@ func newRGBA(c color.Color) rgba {
 	}
 }
 
-func hasAlpha(m image.Image) bool {
-	rect := m.Bounds()
-	for x := 0; x < rect.Dx(); x++ {
-		for y := 0; y < rect.Dy(); y++ {
-			_, _, _, a := m.At(x, y).RGBA()
-			if byte(a) != byte(255) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
 type encoder struct {
 	binWriter binaryWriterErr
+	channels  Channels
 	image     image.Image
 	cache     [64]rgba
 	prev      rgba
@@ -102,11 +91,7 @@ func (e *encoder) writeHeader() {
 	height := uint32(rect.Dy())
 	e.binWriter.write(height)
 
-	channel := ChannelsRGB
-	if hasAlpha(e.image) {
-		channel = ChannelsRGBA
-	}
-	e.binWriter.write(channel)
+	e.binWriter.write(e.channels)
 
 	e.binWriter.write(ColorSpaceSRGB)
 }

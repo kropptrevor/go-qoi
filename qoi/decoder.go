@@ -77,7 +77,7 @@ func (d *decoder) parseHeader() (width uint32, height uint32, err error) {
 	if err != nil {
 		return 0, 0, err
 	}
-	if channels != ChannelsRGB && channels != ChannelsRGBA {
+	if channels != uint8(ChannelsRGB) && channels != uint8(ChannelsRGBA) {
 		return 0, 0, fmt.Errorf("bad channels %v: %w", channels, ErrParseHeader)
 	}
 

@@ -23,10 +23,29 @@ func TestEncode(t *testing.T) {
 		image := image.NewNRGBA(image.Rect(0, 0, 100, 200))
 		var buf bytes.Buffer
 
-		err := qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
+		}
+	})
+
+	t.Run("Should have correct channels", func(t *testing.T) {
+		t.Parallel()
+		expected := byte(qoi.ChannelsRGB)
+		const width = 100
+		const height = 200
+		image := image.NewNRGBA(image.Rect(0, 0, width, height))
+		var buf bytes.Buffer
+
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGB)
+
+		if err != nil {
+			t.Fatalf("expected nil error, but got %v", err)
+		}
+		actual := buf.Bytes()[12]
+		if expected != actual {
+			t.Fatalf("expected %v but got %v", expected, actual)
 		}
 	})
 
@@ -50,7 +69,7 @@ func TestEncode(t *testing.T) {
 		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
 		var buf bytes.Buffer
 
-		err := qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
@@ -77,7 +96,7 @@ func TestEncode(t *testing.T) {
 		image := image.NewNRGBA(image.Rect(0, 0, int(width), int(height)))
 		var buf bytes.Buffer
 
-		err := qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
@@ -97,7 +116,7 @@ func TestEncode(t *testing.T) {
 		image.SetNRGBA(0, 0, color.NRGBA{0, 0, 0, 128})
 		var buf bytes.Buffer
 
-		err := qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
@@ -117,7 +136,7 @@ func TestEncode(t *testing.T) {
 		image.SetNRGBA(0, 0, color.NRGBA{128, 0, 0, 255})
 		var buf bytes.Buffer
 
-		err := qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
@@ -139,7 +158,7 @@ func TestEncode(t *testing.T) {
 		image.SetNRGBA(2, 0, color.NRGBA{128, 0, 0, 255})
 		var buf bytes.Buffer
 
-		err := qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
@@ -160,7 +179,7 @@ func TestEncode(t *testing.T) {
 		image.SetNRGBA(1, 0, color.NRGBA{129, 0, 0, 255})
 		var buf bytes.Buffer
 
-		err := qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
@@ -181,7 +200,7 @@ func TestEncode(t *testing.T) {
 		image.SetNRGBA(1, 0, color.NRGBA{128, 0, 255, 255})
 		var buf bytes.Buffer
 
-		err := qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
@@ -202,7 +221,7 @@ func TestEncode(t *testing.T) {
 		image.SetNRGBA(1, 0, color.NRGBA{151, 31, 38, 255})
 		var buf bytes.Buffer
 
-		err := qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
@@ -223,7 +242,7 @@ func TestEncode(t *testing.T) {
 		image.SetNRGBA(1, 0, color.NRGBA{128, 1, 255, 255})
 		var buf bytes.Buffer
 
-		err := qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
@@ -247,7 +266,7 @@ func TestEncode(t *testing.T) {
 		image.SetNRGBA(4, 0, color.NRGBA{128, 129, 0, 255})
 		var buf bytes.Buffer
 
-		err := qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
@@ -273,7 +292,7 @@ func TestEncode(t *testing.T) {
 		}
 		var buf bytes.Buffer
 
-		err := qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
@@ -300,7 +319,7 @@ func TestEncode(t *testing.T) {
 		image.SetNRGBA(3, 0, color.NRGBA{0, 0, 0, 255})
 		var buf bytes.Buffer
 
-		err := qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
@@ -321,7 +340,7 @@ func TestEncode(t *testing.T) {
 		image.SetNRGBA(int(width)-1, int(height)-1, color.NRGBA{128, 0, 0, 255})
 		var buf bytes.Buffer
 
-		err := qoi.Encode(&buf, image)
+		err := qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
@@ -352,7 +371,7 @@ func TestEncode(t *testing.T) {
 		}
 		var buf bytes.Buffer
 
-		err = qoi.Encode(&buf, image)
+		err = qoi.Encode(&buf, image, qoi.ChannelsRGB)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
@@ -383,7 +402,7 @@ func TestEncode(t *testing.T) {
 		}
 		var buf bytes.Buffer
 
-		err = qoi.Encode(&buf, image)
+		err = qoi.Encode(&buf, image, qoi.ChannelsRGBA)
 
 		if err != nil {
 			t.Fatalf("expected nil error, but got %v", err)
